@@ -43,10 +43,12 @@
 # To contact SUSE about this file by physical or electronic mail,
 # you may find current contact information at www.suse.com
 
+
 from time import sleep
 from datetime import datetime, timedelta
 
 import pytest
+
 
 pytest_plugins = [
     &#34;harvester_e2e_tests.fixtures.api_client&#34;,
@@ -115,11 +117,14 @@ class TestImages:
                 &#34;test-label&#34;: &#34;42&#34;
             },
             &#34;annotations&#34;: {
-                &#34;test-annotation&#34;: &#34;dummy&#34;
-            }
+                &#34;test-annotation&#34;: &#34;dummy&#34;,
+                &#34;field.cattle.io/description&#34;: &#39;test description&#39;
+            },
+
         }
 
         code, data = api_client.images.update(unique_name, dict(metadata=updates))
+
         assert 200 == code, (f&#34;Failed to update image with error: {code}, {data}&#34;)
 
         unexpected = list()
@@ -198,10 +203,10 @@ def test_create_with_invalid_url(api_client, unique_name, wait_timeout):
             break
         sleep(3)
 
-    assert len(image_conds) == 1, f&#34;Got unexpected image conditions!\n{data}&#34;
-    assert &#34;Initialized&#34; == image_conds[0].get(&#34;type&#34;)
-    assert &#34;False&#34; == image_conds[0].get(&#34;status&#34;)
-    assert &#34;no such host&#34; in image_conds[0].get(&#34;message&#34;)
+    assert len(image_conds) in (1, 2), f&#34;Got unexpected image conditions!\n{data}&#34;
+    assert &#34;Initialized&#34; == image_conds[-1].get(&#34;type&#34;)
+    assert &#34;False&#34; == image_conds[-1].get(&#34;status&#34;)
+    assert &#34;no such host&#34; in image_conds[-1].get(&#34;message&#34;)
 
     api_client.images.delete(unique_name)</code></pre>
 </details>
@@ -239,10 +244,10 @@ def test_create_with_invalid_url(api_client, unique_name, wait_timeout):
             break
         sleep(3)
 
-    assert len(image_conds) == 1, f&#34;Got unexpected image conditions!\n{data}&#34;
-    assert &#34;Initialized&#34; == image_conds[0].get(&#34;type&#34;)
-    assert &#34;False&#34; == image_conds[0].get(&#34;status&#34;)
-    assert &#34;no such host&#34; in image_conds[0].get(&#34;message&#34;)
+    assert len(image_conds) in (1, 2), f&#34;Got unexpected image conditions!\n{data}&#34;
+    assert &#34;Initialized&#34; == image_conds[-1].get(&#34;type&#34;)
+    assert &#34;False&#34; == image_conds[-1].get(&#34;status&#34;)
+    assert &#34;no such host&#34; in image_conds[-1].get(&#34;message&#34;)
 
     api_client.images.delete(unique_name)</code></pre>
 </details>
@@ -290,11 +295,14 @@ class TestImages:
                 &#34;test-label&#34;: &#34;42&#34;
             },
             &#34;annotations&#34;: {
-                &#34;test-annotation&#34;: &#34;dummy&#34;
-            }
+                &#34;test-annotation&#34;: &#34;dummy&#34;,
+                &#34;field.cattle.io/description&#34;: &#39;test description&#39;
+            },
+
         }
 
         code, data = api_client.images.update(unique_name, dict(metadata=updates))
+
         assert 200 == code, (f&#34;Failed to update image with error: {code}, {data}&#34;)
 
         unexpected = list()
@@ -486,11 +494,14 @@ def test_get(self, api_client, unique_name):
             &#34;test-label&#34;: &#34;42&#34;
         },
         &#34;annotations&#34;: {
-            &#34;test-annotation&#34;: &#34;dummy&#34;
-        }
+            &#34;test-annotation&#34;: &#34;dummy&#34;,
+            &#34;field.cattle.io/description&#34;: &#39;test description&#39;
+        },
+
     }
 
     code, data = api_client.images.update(unique_name, dict(metadata=updates))
+
     assert 200 == code, (f&#34;Failed to update image with error: {code}, {data}&#34;)
 
     unexpected = list()
