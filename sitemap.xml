@@ -154,6 +154,10 @@
   </url><url>
     <loc>https://harvester.github.io/tests/manual/harvester-rancher/70-pool-loadbalancer-service-no-health-check/</loc>
   </url><url>
+    <loc>https://harvester.github.io/tests/manual/harvester-rancher/71-manually-deploy-csi-driver-to-rke2-cluster/</loc>
+  </url><url>
+    <loc>https://harvester.github.io/tests/manual/harvester-rancher/72-ipxe-auto-airgapped-rancher-integrate-harvester-/</loc>
+  </url><url>
     <loc>https://harvester.github.io/tests/manual/_incoming/2715_adapt_alertmanager_to_dedicated_storage_network/</loc>
   </url><url>
     <loc>https://harvester.github.io/tests/manual/node-driver/cluster-custom-docker-install-url/</loc>
@@ -862,6 +866,8 @@
   </url><url>
     <loc>https://harvester.github.io/tests/manual/hosts/negative-power-down-node/</loc>
   </url><url>
+    <loc>https://harvester.github.io/tests/manual/hosts/vm_rescheduled_after_host_poweroff/</loc>
+  </url><url>
     <loc>https://harvester.github.io/tests/manual/_incoming/2569-press-enter-settings-should-not-refresh-page-copy/</loc>
   </url><url>
     <loc>https://harvester.github.io/tests/manual/_incoming/2485-prevent-normal-user-create-harvesterpublic-ns/</loc>
@@ -884,6 +890,8 @@
   </url><url>
     <loc>https://harvester.github.io/tests/manual/_incoming/2243-rancher-monitoring-status-when-hosting-node-down/</loc>
   </url><url>
+    <loc>https://harvester.github.io/tests/manual/harvester-rancher2-terraform-integration/</loc>
+  </url><url>
     <loc>https://harvester.github.io/tests/manual/_incoming/2626-local-cluster-0owner/</loc>
   </url><url>
     <loc>https://harvester.github.io/tests/manual/_incoming/2587-2116-create-vm-with-restricted-admin/</loc>
@@ -893,6 +901,8 @@
     <loc>https://harvester.github.io/tests/manual/hosts/1669-reboot-cluster-check-vip/</loc>
   </url><url>
     <loc>https://harvester.github.io/tests/manual/hosts/maintenance-mode-reboot-host/</loc>
+  </url><url>
+    <loc>https://harvester.github.io/tests/manual/hosts/vm_migrated_after_host_reboot/</loc>
   </url><url>
     <loc>https://harvester.github.io/tests/manual/hosts/negative-reboot-node/</loc>
   </url><url>
@@ -932,6 +942,8 @@
   </url><url>
     <loc>https://harvester.github.io/tests/manual/_incoming/2968_restored_vm_can_not_be_cloned/</loc>
   </url><url>
+    <loc>https://harvester.github.io/tests/manual/_incoming/4544_restored_vm_name_does_not_support_uppercases/</loc>
+  </url><url>
     <loc>https://harvester.github.io/tests/manual/_incoming/2116-2351-restricted-admin-no-cattle-monitoring-system-volumes/</loc>
   </url><url>
     <loc>https://harvester.github.io/tests/manual/virtual-machines/run-multiple-instances-console/</loc>
@@ -949,6 +961,8 @@
     <loc>https://harvester.github.io/tests/manual/_incoming/1849-setup-test-local-upgrade-responder/</loc>
   </url><url>
     <loc>https://harvester.github.io/tests/manual/hosts/1272-shutdown-host-in-maintenance-mode/</loc>
+  </url><url>
+    <loc>https://harvester.github.io/tests/manual/hosts/delete_vm_after_host_shutdown/</loc>
   </url><url>
     <loc>https://harvester.github.io/tests/manual/advanced/ssl-certificate/</loc>
   </url><url>
@@ -997,6 +1011,8 @@
     <loc>https://harvester.github.io/tests/manual/_incoming/2261-terraform-import-vlan/</loc>
   </url><url>
     <loc>https://harvester.github.io/tests/manual/terraform-provider/</loc>
+  </url><url>
+    <loc>https://harvester.github.io/tests/manual/harvester-rancher2-terraform-integration/terraform_rancher2_provider_testing/</loc>
   </url><url>
     <loc>https://harvester.github.io/tests/manual/terraformer/</loc>
   </url><url>

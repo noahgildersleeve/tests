@@ -267,6 +267,9 @@
   <li><a href="https://harvester.github.io/tests/manual/_incoming/2968_restored_vm_can_not_be_cloned/">restored VM can not be cloned</a></li>
   
 
+  <li><a href="https://harvester.github.io/tests/manual/_incoming/4544_restored_vm_name_does_not_support_uppercases/">Restored VM name does not support uppercases</a></li>
+  
+
   <li><a href="https://harvester.github.io/tests/manual/_incoming/2116-2351-restricted-admin-no-cattle-monitoring-system-volumes/">Restricted admin should not see cattle-monitoring-system volumes</a></li>
   
 
@@ -294,7 +297,7 @@
   <li><a href="https://harvester.github.io/tests/manual/_incoming/2630-sync-image-display-name-to-image-labels/">Sync image display name to image labels</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/_incoming/2577-template-with-efi/">template with EFI</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/_incoming/2577-template-with-efi/">template with EFI (e2e_fe)</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/_incoming/2261-terraform-import-vlan/">Terraform import VLAN</a></li>
@@ -871,6 +874,12 @@
   <li><a href="https://harvester.github.io/tests/manual/harvester-rancher/70-pool-loadbalancer-service-no-health-check/">70-Pool LoadBalancer service no health check</a></li>
   
 
+  <li><a href="https://harvester.github.io/tests/manual/harvester-rancher/71-manually-deploy-csi-driver-to-rke2-cluster/">71-Manually Deploy Harvester csi driver to RKE2 Cluster</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/harvester-rancher/72-ipxe-auto-airgapped-rancher-integrate-harvester-/">72-Use ipxe example to test fully airgapped rancher integration</a></li>
+  
+
   <li><a href="https://harvester.github.io/tests/manual/harvester-rancher/better-load-balancer-config-rke2-cloud-provider/">Better Load Balancer Config of Harvester cloud provider</a></li>
   
 
@@ -993,6 +1002,9 @@
   <li><a href="https://harvester.github.io/tests/manual/hosts/negative-power-down-node/">Power down the node</a></li>
   
 
+  <li><a href="https://harvester.github.io/tests/manual/hosts/vm_rescheduled_after_host_poweroff/">Power node triggers VM reschedule</a></li>
+  
+
   <li><a href="https://harvester.github.io/tests/manual/hosts/1439-pxe-install-without-iso-url-field/">PXE instll without iso_url field</a></li>
   
 
@@ -1000,6 +1012,9 @@
   
 
   <li><a href="https://harvester.github.io/tests/manual/hosts/maintenance-mode-reboot-host/">Reboot host that is in maintenance mode (e2e_be)</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/hosts/vm_migrated_after_host_reboot/">Reboot host trigger VM migration</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/hosts/negative-reboot-node/">Reboot node</a></li>
@@ -1018,6 +1033,9 @@
   
 
   <li><a href="https://harvester.github.io/tests/manual/hosts/1272-shutdown-host-in-maintenance-mode/">Shut down host in maintenance mode and verify label change</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/hosts/delete_vm_after_host_shutdown/">Shut down host then delete hosted VM</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/hosts/maintenance-mode-start-host/">Start Host in maintenance mode (e2e_be)</a></li>
@@ -1370,6 +1388,17 @@
 
   
 
+  <li><a href="https://harvester.github.io/tests/manual/harvester-rancher2-terraform-integration/">Rancher2 Terraform Provider Integration</a></li>
+  
+    <ul>
+
+  <li><a href="https://harvester.github.io/tests/manual/harvester-rancher2-terraform-integration/terraform_rancher2_provider_testing/">Terraform Rancher2 Provider Testing</a></li>
+  
+
+</ul>
+
+  
+
   <li><a href="https://harvester.github.io/tests/manual/templates/">Templates</a></li>
   
     <ul>
@@ -1555,7 +1584,7 @@
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-a-new-vm-and-add-install-guest-agent-option/">Create a new VM and add Install guest agent option (e2e_be_fe)</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-a-new-vm-with-network-data-from-the-form/">Create a new VM with Network Data from the form</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-a-new-vm-with-network-data-from-the-form/">Create a new VM with Network Data from the form (e2e_fe)</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-a-new-vm-with-network-data-from-yaml/">Create a new VM with Network Data from YAML (e2e_be)</a></li>
@@ -1582,7 +1611,7 @@
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-multiple-instances-vm-with-iso-image/">Create multiple instances of the vm with ISO image (e2e_be)</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-multiple-instances-vm-with-raw-image/">Create multiple instances of the vm with raw image (e2e_be)</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-multiple-instances-vm-with-raw-image/">Create multiple instances of the vm with raw image (e2e_be_fe)</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-multiple-instances-vm-with-windows-image/">Create multiple instances of the vm with Windows Image (e2e_be)</a></li>
@@ -1636,7 +1665,7 @@
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-vm-using-a-template-of-default-version-with-machine-type-q35/">Create vm using a template of default version with machine type q35</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-vm-using-a-template-non-default-version/">Create vm using a template of non-default version</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-vm-using-a-template-non-default-version/">Create vm using a template of non-default version (e2e_fe)</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-vm-with-both-cpu-and-memory-not-in-cluster/">Create vm with both CPU and Memory not in cluster (e2e_be)</a></li>
@@ -1645,7 +1674,7 @@
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-vm-with-cpu-not-in-cluster/">Create vm with CPU not in cluster. (e2e_be)</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-vm-with-existing-volume/">Create VM with existing Volume (e2e_be)</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-vm-with-existing-volume/">Create VM with existing Volume (e2e_be_fe)</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/create-vm-with-memory-not-in-cluster/">Create vm with Memory not in cluster. (e2e_be)</a></li>
@@ -1693,7 +1722,7 @@
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/negative-delete-vm/">Delete VM Negative (e2e_be)</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/1602-delete-vm-with-exported-image/">Delete VM with exported image</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/1602-delete-vm-with-exported-image/">Delete VM with exported image (e2e_fe)</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/edit-a-vm-and-add-install-enable-usb-tablet-option/">Edit a VM and add install Enable usb tablet option (e2e_be)</a></li>
@@ -1705,7 +1734,7 @@
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/edit-a-vm-from-the-form-to-add-network-data/">Edit a VM from the form to add Network Data</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/edit-a-vm-from-the-form-to-add-user-data/">Edit a VM from the form to add user data</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/edit-a-vm-from-the-form-to-add-user-data/">Edit a VM from the form to add user data (e2e_fe)</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/edit-a-vm-from-the-yaml-to-add-network-data/">Edit a VM from the YAML to add Network Data (e2e_be)</a></li>
@@ -1717,7 +1746,7 @@
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/edit-an-existing-vm-to-another-machine-type/">Edit an existing VM to another machine type (e2e_be)</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/edit-vm-and-insert-ssh-and-check-the-ssh-key-is-accepted-for-the-login/">Edit vm and insert ssh and check the ssh key is accepted for the login (e2e_be)</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/edit-vm-and-insert-ssh-and-check-the-ssh-key-is-accepted-for-the-login/">Edit vm and insert ssh and check the ssh key is accepted for the login (e2e_be_fe)</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/negative-edit-vm-form/">Edit VM Form Negative</a></li>
@@ -1765,7 +1794,7 @@
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/negative-start-vm/">Start VM Negative (e2e_be)</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/negative-stop-vm/">Stop VM Negative</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/negative-stop-vm/">Stop VM Negative (e2e_fe)</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/1602-update-labels-on-image-after-vm-delete/">Update image labels after deleting source VM</a></li>
@@ -1900,79 +1929,116 @@
   <div>
     <article id="content">
        <ul>
-<li>Related task: <a href="https://github.com/harvester/harvester/issues/1812">#1812</a> K3s cloud provider and csi driver support</li>
+<li>Related task: <a href="https://github.com/harvester/harvester/issues/2755#issuecomment-1552842389">#2755</a> Steps to manually install Harvester csi-driver on K3s cluster</li>
 </ul>
-<h3 id="environment-setup">Environment Setup</h3>
-<ol>
-<li>Docker install rancher v2.6.4</li>
-<li>Create one node harvester with enough resource</li>
-</ol>
+<h3 id="reference-document">Reference Document</h3>
+<p><a href="https://deploy-preview-309--harvester-preview.netlify.app/dev/rancher/csi-driver/#deploying-with-harvester-k3s-node-driver">Deploying with Harvester K3s Node Driver</a></p>
 <h3 id="verify-steps">Verify steps</h3>
-<p>Follow step <strong>1~13</strong> in tets plan <code>59-Create K3s Kubernetes Cluster</code></p>
 <ol>
 <li>
-<p>Download the <a href="https://github.com/harvester/harvester-csi-driver/blob/master/deploy/generate_addon.sh">Generate addon configuration</a> for csi driver</p>
+<p>Prepare a Harvester cluster with enough cpu, memory and disks for K3s guest cluster</p>
 </li>
 <li>
-<p>ssh to harvester node 1</p>
+<p>Create a Rancher instance</p>
 </li>
 <li>
-<p>Execute <code>cat /etc/rancher/rke2/rke2.yaml</code></p>
+<p>Import Harvester in Rancher and create cloud credential</p>
 </li>
 <li>
-<p>change the server value from https://127.0.0.1:6443 to your node1 IP</p>
+<p>ssh to Harvester management node</p>
+</li>
+<li>
+<p>Extract the kubeconfig of Harvester with <code>cat /etc/rancher/rke2/rke2.yaml</code></p>
+</li>
+<li>
+<p>Change the server value from https://127.0.0.1:6443/ to your VIP</p>
 </li>
 <li>
 <p>Copy the kubeconfig and add into your local ~/.kube/config file</p>
 </li>
 <li>
-<p>Generate K3s kubeconfig by running generate addon script
-<code> ./deploy/generate_addon.sh &lt;k3s cluster name&gt; &lt;namespace&gt;</code>
-e.g <code>./generate_addon.sh k3s-csi-cluster default</code></p>
+<p>Import Harvester in Rancher</p>
 </li>
 <li>
-<p>Copy the ks3 kubeconfig content start with <code>cloud-provider-config:</code> between <code>addons_include:</code></p>
+<p>Create cloud credential</p>
 </li>
 <li>
-<p>ssh to K3s VM
-<img src="https://user-images.githubusercontent.com/29251855/158932912-38297b70-7546-4349-801f-6a4b8b973305.png" alt="image"></p>
+<p>Provision a k3s cluster
+<img src="https://github.com/harvester/harvester/assets/29251855/98f9d10f-2307-4aa5-bd47-3e68e03c2232" alt="image"></p>
 </li>
 <li>
-<p>Add kubeconfig content to <code>/etc/kubernetes/cloud-config</code>file, remember to align the yaml layout</p>
+<p>Provide the login credential in user data</p>
+<pre tabindex="0"><code>password: 123456
+chpasswd: { expire: False }
+ssh_pwauth: True
+</code></pre></li>
+<li>
+<p>On K3s, by default will not provide cloud-provider
+<img src="https://github.com/harvester/harvester/assets/29251855/5058509e-f82e-4f98-af39-3d4e7ad54127" alt="image"></p>
 </li>
 <li>
-<p>Install Harvester csi driver
-<img src="https://user-images.githubusercontent.com/29251855/158550983-61cff655-66a6-4a49-96bd-6e208f4fc9d8.png" alt="image">
-<img src="https://user-images.githubusercontent.com/29251855/158551034-090cee3d-9bd6-425c-84d8-16f6a66a5c64.png" alt="image">
-<img src="https://user-images.githubusercontent.com/29251855/158933473-a0172a62-5f7c-4e68-860c-c9cb38275791.png" alt="image">
-<img src="https://user-images.githubusercontent.com/29251855/158933756-d4198111-ae05-4a7d-8ea8-d21e3f3d2b87.png" alt="image"></p>
+<p>Check k3s cluster provisioning in Ready
+<img src="https://github.com/harvester/harvester/assets/29251855/3acc2867-006b-4fa9-ba37-2e663eaaa8d4" alt="image"></p>
+</li>
+<li>
+<p>Use the new <a href="https://github.com/harvester/harvester-csi-driver/pull/24/files">generate_cloud_provider_config.sh</a> to generate <code>cloud-config</code> content for csi-driver</p>
+<pre tabindex="0"><code>./generate_cloud_provider_config.sh &lt;serviceaccount name&gt; &lt;namespace&gt;
+
+e.g ./generate_cloud_provider_config.sh k3s default
+</code></pre></li>
+<li>
+<p>ssh to the k3s guest cluster vm</p>
+</li>
+<li>
+<p>Create the config-files directory</p>
+<pre tabindex="0"><code>mkdir -p /var/lib/rancher/rke2/etc/config-files
+</code></pre></li>
+<li>
+<p>Add the cloud-provider-config file from the cloud-config part of output generated from script</p>
+<pre tabindex="0"><code>vim /var/lib/rancher/rke2/etc/config-files/cloud-provider-config
+</code></pre></li>
+<li>
+<p>Access k3s guest cluster on Rancher</p>
+</li>
+<li>
+<p>Switch to <code>All Namespace</code></p>
+</li>
+<li>
+<p>Open Apps -&gt; Charts</p>
+</li>
+<li>
+<p>Install Harvester CSI Driver from the Rancher marketplace. You do not need to change the cloud-config path.
+<img src="https://github.com/harvester/harvester/assets/29251855/188af4e3-9735-4c59-868d-2173c1ea3971" alt="image"></p>
+</li>
+<li>
+<p>Open Storage -&gt; StorageClasses</p>
+</li>
+<li>
+<p>PersistentVolumeClaims page</p>
+</li>
+<li>
+<p>Create a PVC named <code>test-pvc</code>, select <code>Harvester</code> in the Storage Class
+<img src="https://github.com/harvester/harvester/assets/29251855/cf4e1682-3774-4b57-b897-411f36d1bc44" alt="image"></p>
 </li>
 </ol>
 <h2 id="expected-results">Expected Results</h2>
 <ol>
 <li>
-<p>Can deploy K3s cluster on harvester with kubernetes version <code>v1.23.4+k3s1</code>
-<img src="https://user-images.githubusercontent.com/29251855/158935474-9d6f1c37-ea59-485d-83f5-6f1b19ebfa98.png" alt="image"></p>
+<p>Check can successfully install csi-driver on <code>Installed Apps</code>
+<img src="https://github.com/harvester/harvester/assets/29251855/4493d3d1-230f-4651-a9ce-cc25eae8459e" alt="image"></p>
 </li>
 <li>
-<p>Can correctly install harvester csi driver on K3s cluster
-<img src="https://user-images.githubusercontent.com/29251855/158933473-a0172a62-5f7c-4e68-860c-c9cb38275791.png" alt="image">
-<img src="https://user-images.githubusercontent.com/29251855/158933756-d4198111-ae05-4a7d-8ea8-d21e3f3d2b87.png" alt="image"></p>
+<p>Check <code>Harvester</code> set to the <code>default</code> storage class
+<img src="https://github.com/harvester/harvester/assets/29251855/34489066-ea70-4271-a64f-12e9018aaa95" alt="image"></p>
 </li>
 <li>
-<p>Can deploy nginx service with new PVC created
-<img src="https://user-images.githubusercontent.com/29251855/158934469-6b050d39-a45c-493d-9e29-89e16c1cf23d.png" alt="image">
-<img src="https://user-images.githubusercontent.com/29251855/158934499-6c7d9525-f43a-4426-8786-1e4aec099964.png" alt="image">
-<img src="https://user-images.githubusercontent.com/29251855/158934531-9c42b704-67cc-4c91-b24e-fa29f7183f05.png" alt="image"></p>
+<p>Check the <code>test-pvc</code> exists on <code>PersistentVolumeClaims</code> page</p>
 </li>
 <li>
-<p>Can allocate size in nginx container
-<img src="https://user-images.githubusercontent.com/29251855/158934986-c08ddccc-3b33-4508-9861-6d10c5ded3c5.png" alt="image"></p>
+<p>Check a new pv created on PersistentVolumes</p>
 </li>
 <li>
-<p>Can resize and delete volume with harvester storage class
-<img src="https://user-images.githubusercontent.com/29251855/158935263-a8b6fa9e-1f4b-43ae-a687-6df3e34986a1.png" alt="image">
-<img src="https://user-images.githubusercontent.com/29251855/158935288-67409de3-d5d5-4c9d-af04-421f4153658b.png" alt="image"></p>
+<p>Check the created pv also exists on Harvester Volumes page</p>
 </li>
 </ol>
 

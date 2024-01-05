@@ -50,10 +50,17 @@ from pytest_dependency import DependencyManager as DepMgr
 
 def check_depends(self, depends, item):
     # monkey patch `DependencyManager.checkDepends`
-    # ref: https://github.com/RKrahl/pytest-dependency/issues/57#issuecomment-1000896418
 
     marker = item.get_closest_marker(&#34;dependency&#34;)
-    if marker.kwargs.get(&#39;any&#39;):
+    if marker and marker.kwargs.get(&#39;param&#39;):
+        try:
+            param_id = item.callspec.id
+            depends = [f&#34;{d}[{param_id}]&#34; for d in depends]
+        except AttributeError:
+            pass
+
+    # ref: https://github.com/RKrahl/pytest-dependency/issues/57#issuecomment-1000896418
+    if marker and marker.kwargs.get(&#39;any&#39;):
         for depend in depends:
             try:
                 self._check_depend([depend], item)
@@ -103,12 +110,6 @@ def pytest_addoption(parser):
         help=&#39;private key to access Harvester node&#39;
     )
     parser.addoption(
-        &#39;--do-not-cleanup&#39;,
-        action=&#39;store_true&#39;,
-        default=config_data[&#39;do-not-cleanup&#39;],
-        help=&#39;Do not cleanup the test artifacts&#39;
-    )
-    parser.addoption(
         &#39;--vlan-id&#39;,
         action=&#39;store&#39;,
         type=int,
@@ -144,12 +145,6 @@ def pytest_addoption(parser):
               &#39;Harvester node to facilitate the host-specific tests&#39;)
     )
     parser.addoption(
-        &#39;--win-image-url&#39;,
-        action=&#39;store&#39;,
-        default=config_data[&#39;win-image-url&#39;],
-        help=(&#39;Windows image URL &#39;)
-    )
-    parser.addoption(
         &#39;--opensuse-image-url&#39;,
         action=&#39;store&#39;,
         default=config_data.get(&#39;opensuse-image-url&#39;),
@@ -160,12 +155,6 @@ def pytest_addoption(parser):
         action=&#39;store&#39;,
         default=config_data[&#39;terraform-scripts-location&#39;],
         help=(&#39;External scripts to create resources using terraform&#39;)
-    )
-    parser.addoption(
-        &#39;--backup-scripts-location&#39;,
-        action=&#39;store&#39;,
-        default=config_data[&#39;backup-scripts-location&#39;],
-        help=(&#39;scripts to create files inside a VM&#39;)
     )
     parser.addoption(
         &#39;--image-cache-url&#39;,
@@ -198,17 +187,16 @@ def pytest_addoption(parser):
         help=(&#39;Region of the bucket&#39;)
     )
     parser.addoption(
+        &#39;--s3-endpoint&#39;,
+        action=&#39;store&#39;,
+        default=config_data.get(&#39;s3-endpoint&#39;, &#39;&#39;),
+        help=(&#39;S3 endpoint&#39;)
+    )
+    parser.addoption(
         &#39;--nfs-endpoint&#39;,
         action=&#39;store&#39;,
         default=config_data[&#39;nfs-endpoint&#39;],
         help=(&#39;Endpoint for storing backup in nfs share&#39;)
-    )
-    parser.addoption(
-        &#39;--rancher-version&#39;,
-        action=&#39;store&#39;,
-        default=config_data[&#39;rancher-version&#39;],
-        help=(&#39;Rancher Docker image version to use when bootstrapping Rancher &#39;
-              &#39;VM in Harvester&#39;)
     )
     parser.addoption(
         &#39;--rancher-endpoint&#39;,
@@ -223,20 +211,16 @@ def pytest_addoption(parser):
         help=&#39;Rancher admin user password&#39;
     )
     parser.addoption(
-        &#39;--kubernetes-version&#39;,
+        &#39;--RKE2-version&#39;,
         action=&#39;store&#39;,
-        default=config_data.get(&#39;kubernetes-version&#39;, &#39;v1.21.6+rke2r1&#39;),
-        help=&#39;Kubernetes version to use for Rancher integration tests&#39;
+        default=config_data.get(&#39;RKE2-version&#39;),
+        help=&#39;RKE2 Kubernetes version to use for Rancher integration tests&#39;
     )
     parser.addoption(
-        &#39;--test-environment&#39;,
+        &#39;--RKE1-version&#39;,
         action=&#39;store&#39;,
-        default=&#39;local&#39;,
-        help=(&#39;QE test environment (e.g. chiefs, raiders, etc), for &#39;
-              &#39;distinguishing the test artifacts in the case where an &#39;
-              &#39;dependency (e.g. Rancher) is shared amongst the &#39;
-              &#39;test environments. If you are running local Vagrant, you &#39;
-              &#39;should name the environment to your username (e.g. gyee)&#39;)
+        default=config_data.get(&#39;RKE1-version&#39;),
+        help=&#39;RKE1 Kubernetes version to use for Rancher integration tests&#39;
     )
     parser.addoption(
         &#39;--rancher-cluster-wait-timeout&#39;,
@@ -287,60 +271,17 @@ def pytest_addoption(parser):
         default=config_data[&#39;upgrade-wait-timeout&#39;],
         help=(&#39;Wait time for polling upgrade Harvester cluster completed status&#39;)
     )
-
-    # TODO(gyee): may need to add SSL options later
+    parser.addoption(
+        &#39;--terraform-provider-harvester&#39;,
+        action=&#39;store&#39;,
+        default=config_data.get(&#39;terraform-provider-harvester&#39;),
+        help=(&#39;Version of Terraform Harvester Provider&#39;)
+    )
 
 
 def pytest_configure(config):
     # Register marker as the format (marker, (description))
     markers = [
-        (&#39;public_network&#39;, (&#39;mark test to run only if public networking is available&#39;)),
-        (&#39;multi_node_scheduling&#39;, (
-            &#39;mark test to run only if we have a multi-node cluster&#39;
-            &#39; where some hosts have more resources then others in order to test VM&#39;
-            &#39; scheduling behavior&#39;)),
-        (&#39;host_management&#39;, (
-            &#39;mark test to run only if we have &#39;
-            &#39;host management (power_on.sh, power_off.sh, reboot.sh) &#39;
-            &#39;scripts provided. These tests are designed to test &#39;
-            &#39;scheduling resiliency and disaster recovery scenarios. &#39;)),
-        (&#39;backupnfs&#39;, (
-            &#39;mark test to run only the backup and restore&#39;
-            &#39;tests for NFS backup target&#39;)),
-        (&#39;backups3&#39;, (
-            &#39;mark test to run only the backup and restore&#39;
-            &#39;tests for S3 backup target&#39;)),
-        (&#39;imageupload&#39;, (&#39;marker to run imageupload test&#39;)),
-        (&#39;singlevmtest&#39;, (&#39;marker to run create single vm test&#39;)),
-        (&#39;multivmtest&#39;, (&#39;marker to run create multiple vms test&#39;)),
-        (&#39;windows_vm&#39;, (
-            &#39;marker to run only create vm test &#39;
-            &#39;using windows images&#39;)),
-        (&#39;usbvmtest&#39;, (&#39;marker to run only create vm test with usb&#39;)),
-        (&#39;nouserdata&#39;, (&#39;marker to run only create vm test with nouserdata&#39;)),
-        (&#39;images_p1&#39;, (&#39;mark test to run only to execute the P1 test for images&#39;)),
-        (&#39;images_p2&#39;, (&#39;mark test to run only to execute the P2 test for images&#39;)),
-        (&#39;terraform_provider_p1&#39;, (
-            &#39;mark test to run only to execute the P1 test for terraform provider&#39;)),
-        (&#39;imageupload&#39;, (&#39;mark test to run upload image&#39;)),
-        (&#39;virtual_machines_p1&#39;, (&#39;marker to run only P1 Virtual Machine test&#39;)),
-        (&#39;virtual_machines_p2&#39;, (&#39;marker to run only P2 Virtual Machine test&#39;)),
-        (&#39;network_p1&#39;, (&#39;marker to run only P1 Network test &#39;)),
-        (&#39;network_p2&#39;, (&#39;marker to run only P2 Network test &#39;)),
-        (&#39;volumes_p1&#39;, (&#39;mark test to run only P1 test for Volume&#39;)),
-        (&#39;volumes_p2&#39;, (&#39;mark test to run only P2 test for Volume&#39;)),
-        (&#39;authentication_p1&#39;, (&#39;mark test to run only P1 test for authentication&#39;)),
-        (&#39;backup_and_restore_p1&#39;, (
-            &#39;mark test to run only to execute the P1 test for Backup and Recovery&#39;)),
-        (&#39;backup_and_restore_p2&#39;, (
-            &#39;mark test to run only to execute the P2 test for Backup and Recovery&#39;)),
-        (&#39;terraform_provider_p1&#39;, (&#39;mark test to run only P1 test for terraform provider&#39;)),
-        (&#39;rancher_integration_with_external_rancher&#39;, (
-            &#39;mark Rancher integration tests with an external Rancher&#39;)),
-        (&#39;rke1&#39;, (&#39;marker to run rke1 integration tests &#39;)),
-        (&#39;rke2&#39;, (&#39;marker to run rke2 integration tests &#39;)),
-
-        # deprecated markers above would be removed.
         (&#34;skip_version_before&#34;, (
             &#34;mark test skipped when cluster version &lt; provided version&#34;)),
         (&#34;skip_version_after&#34;, (
@@ -363,9 +304,14 @@ def pytest_configure(config):
         (&#34;any_nodes&#34;, (&#34;{_r} tests which could be ran on clushter with any nodes&#34;)),
         (&#34;single_node&#34;, (&#34;{_r} tests which could only be ran on cluster with single node&#34;)),
         (&#34;three_nodes&#34;, (&#34;{_r} tests which could only be ran on cluster with three nodes&#34;)),
-        (&#39;rancher&#39;, (&#34;{_r} reancher integration tests&#34;)),
+        (&#39;rancher&#39;, (&#34;{_r} rancher integration tests&#34;)),
+        (&#39;rke1&#39;, (&#34;{_r} rancher RKE1 tests&#34;)),
+        (&#39;rke2&#39;, (&#34;{_r} rancher RKE2 tests&#34;)),
         (&#39;terraform&#39;, (&#34;{_r} terraform tests&#34;)),
         (&#39;virtualmachines&#39;, (&#39;{_r} virtualmachines tests&#39;)),
+        (&#39;backup_target&#39;, (&#39;{_r} backup-target tests&#39;)),
+        (&#39;S3&#39;, (&#39;{_r} backup-target tests with S3&#39;)),
+        (&#39;NFS&#39;, (&#39;{_r} backup-target tests with NFS&#39;))
     ]
 
     for m, msg in markers:
@@ -373,20 +319,14 @@ def pytest_configure(config):
         config.addinivalue_line(&#34;markers&#34;, f&#34;{m}:{msg.format(_r=related)}&#34;)
 
 
-def pytest_collection_modifyitems(config, items):
+@pytest.hookimpl(hookwrapper=True)
+def pytest_collection_modifyitems(session, config, items):
     if config.getoption(&#39;--vlan-id&#39;) == -1:
         skip_public_network = pytest.mark.skip(reason=(
             &#39;VM not accessible because no VLAN setup with public routing&#39;))
         for item in items:
             if &#39;public_network&#39; in item.keywords:
                 item.add_marker(skip_public_network)
-
-    if config.getoption(&#39;--win-image-url&#39;) == &#39;&#39;:
-        skip_windows_vm = pytest.mark.skip(reason=(
-            &#39;Windows image not specified&#39;))
-        for item in items:
-            if &#39;windows_vm&#39; in item.keywords:
-                item.add_marker(skip_windows_vm)
 
     if (config.getoption(&#39;--nfs-endpoint&#39;) == &#39;&#39; and
             config.getoption(&#39;--accessKeyId&#39;) == &#39;&#39;):
@@ -421,7 +361,72 @@ def pytest_collection_modifyitems(config, items):
     if not config.getoption(&#34;--delete-host&#34;, False):
         for item in items:
             if &#34;delete_host&#34; in item.keywords:
-                item.add_marker(pytest.mark.skip(reason=&#34;Not configured to test host deletion.&#34;))</code></pre>
+                item.add_marker(pytest.mark.skip(reason=&#34;Not configured to test host deletion.&#34;))
+
+    # legacy code above
+    # &#39;&#39;&#39; To enable the test select with `and depends` keyword,
+    #     to select test cases and it depended test cases.
+    # &#39;&#39;&#39;
+
+    if &#34;and depends&#34; not in config.option.keyword:
+        # DO nothing
+        yield
+        return
+
+    all_items, old_keyword = items.copy(), config.option.keyword
+    config.option.keyword = old_keyword.replace(&#39;and depends&#39;, &#39;&#39;)
+
+    yield
+
+    scope_cls = {
+        &#34;session&#34;: pytest.Session,
+        &#34;package&#34;: pytest.Package,
+        &#34;module&#34;: pytest.Module,
+        &#34;class&#34;: pytest.Class
+    }
+    # ref: https://github.com/RKrahl/pytest-dependency/blob/0.5.1/pytest_dependency.py#L77
+    # named_items : dict[(&#39;dep-scope&#39;, &#39;dep-name&#39;), list[(idx, &#39;test-item&#39;)]]
+    # picked : list[(idx, &#39;test-item&#39;)]
+    named_items, picked = dict(), list()
+    for idx, item in enumerate(all_items):
+        if item in items:
+            picked.append((idx, item))
+        try:
+            marker = item.get_closest_marker(&#39;dependency&#39;)
+            scope = marker.kwargs.get(&#39;scope&#39;, &#39;module&#39;)
+            node = item.getparent(scope_cls[scope])
+            named_items.setdefault((node, marker.kwargs[&#39;name&#39;]), []).append((idx, item))
+        except AttributeError:
+            continue
+        except KeyError:
+            nodeid = item.nodeid.replace(&#34;::()::&#34;, &#34;::&#34;)
+            if scope not in (&#34;session&#34;, &#34;package&#34;):
+                shift = 2 if scope == &#34;class&#34; else 1
+                nodeid = nodeid.split(&#34;::&#34;, shift)[shift]
+            named_items.setdefault((node, nodeid), []).append((idx, item))
+
+    def pick_depends(idx, item, items):
+        picked = []
+        try:
+            marker = item.get_closest_marker(&#39;dependency&#39;)
+            scope = marker.kwargs.get(&#39;scope&#39;, &#39;module&#39;)
+            node = item.getparent(scope_cls[scope])
+            for name in marker.kwargs[&#39;depends&#39;]:
+                picked.extend(items.get((node, name), []))
+        except (AttributeError, KeyError):
+            pass
+        return picked
+
+    depends = []  # list[(idx, &#39;test-item&#39;)]
+    while picked:
+        depends.append(picked.pop())
+        picked.extend(pick_depends(*depends[-1], named_items))
+
+    session.items = items = [it for idx, it in sorted(set(depends), key=lambda it: it[0])]
+    # deselected.extend(t for ts in named_items.values() for i, t in ts if t not in items)
+    deselected = [t for t in all_items if t not in items]
+    # update to let the report shows correct counts
+    config.pluginmanager.get_plugin(&#39;terminalreporter&#39;).stats[&#39;deselected&#39;] = deselected</code></pre>
 </details>
 </section>
 <section>
@@ -442,10 +447,17 @@ def pytest_collection_modifyitems(config, items):
 </summary>
 <pre><code class="python">def check_depends(self, depends, item):
     # monkey patch `DependencyManager.checkDepends`
-    # ref: https://github.com/RKrahl/pytest-dependency/issues/57#issuecomment-1000896418
 
     marker = item.get_closest_marker(&#34;dependency&#34;)
-    if marker.kwargs.get(&#39;any&#39;):
+    if marker and marker.kwargs.get(&#39;param&#39;):
+        try:
+            param_id = item.callspec.id
+            depends = [f&#34;{d}[{param_id}]&#34; for d in depends]
+        except AttributeError:
+            pass
+
+    # ref: https://github.com/RKrahl/pytest-dependency/issues/57#issuecomment-1000896418
+    if marker and marker.kwargs.get(&#39;any&#39;):
         for depend in depends:
             try:
                 self._check_depend([depend], item)
@@ -501,12 +513,6 @@ def pytest_collection_modifyitems(config, items):
         help=&#39;private key to access Harvester node&#39;
     )
     parser.addoption(
-        &#39;--do-not-cleanup&#39;,
-        action=&#39;store_true&#39;,
-        default=config_data[&#39;do-not-cleanup&#39;],
-        help=&#39;Do not cleanup the test artifacts&#39;
-    )
-    parser.addoption(
         &#39;--vlan-id&#39;,
         action=&#39;store&#39;,
         type=int,
@@ -542,12 +548,6 @@ def pytest_collection_modifyitems(config, items):
               &#39;Harvester node to facilitate the host-specific tests&#39;)
     )
     parser.addoption(
-        &#39;--win-image-url&#39;,
-        action=&#39;store&#39;,
-        default=config_data[&#39;win-image-url&#39;],
-        help=(&#39;Windows image URL &#39;)
-    )
-    parser.addoption(
         &#39;--opensuse-image-url&#39;,
         action=&#39;store&#39;,
         default=config_data.get(&#39;opensuse-image-url&#39;),
@@ -558,12 +558,6 @@ def pytest_collection_modifyitems(config, items):
         action=&#39;store&#39;,
         default=config_data[&#39;terraform-scripts-location&#39;],
         help=(&#39;External scripts to create resources using terraform&#39;)
-    )
-    parser.addoption(
-        &#39;--backup-scripts-location&#39;,
-        action=&#39;store&#39;,
-        default=config_data[&#39;backup-scripts-location&#39;],
-        help=(&#39;scripts to create files inside a VM&#39;)
     )
     parser.addoption(
         &#39;--image-cache-url&#39;,
@@ -596,17 +590,16 @@ def pytest_collection_modifyitems(config, items):
         help=(&#39;Region of the bucket&#39;)
     )
     parser.addoption(
+        &#39;--s3-endpoint&#39;,
+        action=&#39;store&#39;,
+        default=config_data.get(&#39;s3-endpoint&#39;, &#39;&#39;),
+        help=(&#39;S3 endpoint&#39;)
+    )
+    parser.addoption(
         &#39;--nfs-endpoint&#39;,
         action=&#39;store&#39;,
         default=config_data[&#39;nfs-endpoint&#39;],
         help=(&#39;Endpoint for storing backup in nfs share&#39;)
-    )
-    parser.addoption(
-        &#39;--rancher-version&#39;,
-        action=&#39;store&#39;,
-        default=config_data[&#39;rancher-version&#39;],
-        help=(&#39;Rancher Docker image version to use when bootstrapping Rancher &#39;
-              &#39;VM in Harvester&#39;)
     )
     parser.addoption(
         &#39;--rancher-endpoint&#39;,
@@ -621,20 +614,16 @@ def pytest_collection_modifyitems(config, items):
         help=&#39;Rancher admin user password&#39;
     )
     parser.addoption(
-        &#39;--kubernetes-version&#39;,
+        &#39;--RKE2-version&#39;,
         action=&#39;store&#39;,
-        default=config_data.get(&#39;kubernetes-version&#39;, &#39;v1.21.6+rke2r1&#39;),
-        help=&#39;Kubernetes version to use for Rancher integration tests&#39;
+        default=config_data.get(&#39;RKE2-version&#39;),
+        help=&#39;RKE2 Kubernetes version to use for Rancher integration tests&#39;
     )
     parser.addoption(
-        &#39;--test-environment&#39;,
+        &#39;--RKE1-version&#39;,
         action=&#39;store&#39;,
-        default=&#39;local&#39;,
-        help=(&#39;QE test environment (e.g. chiefs, raiders, etc), for &#39;
-              &#39;distinguishing the test artifacts in the case where an &#39;
-              &#39;dependency (e.g. Rancher) is shared amongst the &#39;
-              &#39;test environments. If you are running local Vagrant, you &#39;
-              &#39;should name the environment to your username (e.g. gyee)&#39;)
+        default=config_data.get(&#39;RKE1-version&#39;),
+        help=&#39;RKE1 Kubernetes version to use for Rancher integration tests&#39;
     )
     parser.addoption(
         &#39;--rancher-cluster-wait-timeout&#39;,
@@ -685,12 +674,16 @@ def pytest_collection_modifyitems(config, items):
         default=config_data[&#39;upgrade-wait-timeout&#39;],
         help=(&#39;Wait time for polling upgrade Harvester cluster completed status&#39;)
     )
-
-    # TODO(gyee): may need to add SSL options later</code></pre>
+    parser.addoption(
+        &#39;--terraform-provider-harvester&#39;,
+        action=&#39;store&#39;,
+        default=config_data.get(&#39;terraform-provider-harvester&#39;),
+        help=(&#39;Version of Terraform Harvester Provider&#39;)
+    )</code></pre>
 </details>
 </dd>
 <dt id="harvester_e2e_tests.conftest.pytest_collection_modifyitems"><code class="name flex">
-<span>def <span class="ident">pytest_collection_modifyitems</span></span>(<span>config, items)</span>
+<span>def <span class="ident">pytest_collection_modifyitems</span></span>(<span>session, config, items)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -698,20 +691,14 @@ def pytest_collection_modifyitems(config, items):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pytest_collection_modifyitems(config, items):
+<pre><code class="python">@pytest.hookimpl(hookwrapper=True)
+def pytest_collection_modifyitems(session, config, items):
     if config.getoption(&#39;--vlan-id&#39;) == -1:
         skip_public_network = pytest.mark.skip(reason=(
             &#39;VM not accessible because no VLAN setup with public routing&#39;))
         for item in items:
             if &#39;public_network&#39; in item.keywords:
                 item.add_marker(skip_public_network)
-
-    if config.getoption(&#39;--win-image-url&#39;) == &#39;&#39;:
-        skip_windows_vm = pytest.mark.skip(reason=(
-            &#39;Windows image not specified&#39;))
-        for item in items:
-            if &#39;windows_vm&#39; in item.keywords:
-                item.add_marker(skip_windows_vm)
 
     if (config.getoption(&#39;--nfs-endpoint&#39;) == &#39;&#39; and
             config.getoption(&#39;--accessKeyId&#39;) == &#39;&#39;):
@@ -746,7 +733,72 @@ def pytest_collection_modifyitems(config, items):
     if not config.getoption(&#34;--delete-host&#34;, False):
         for item in items:
             if &#34;delete_host&#34; in item.keywords:
-                item.add_marker(pytest.mark.skip(reason=&#34;Not configured to test host deletion.&#34;))</code></pre>
+                item.add_marker(pytest.mark.skip(reason=&#34;Not configured to test host deletion.&#34;))
+
+    # legacy code above
+    # &#39;&#39;&#39; To enable the test select with `and depends` keyword,
+    #     to select test cases and it depended test cases.
+    # &#39;&#39;&#39;
+
+    if &#34;and depends&#34; not in config.option.keyword:
+        # DO nothing
+        yield
+        return
+
+    all_items, old_keyword = items.copy(), config.option.keyword
+    config.option.keyword = old_keyword.replace(&#39;and depends&#39;, &#39;&#39;)
+
+    yield
+
+    scope_cls = {
+        &#34;session&#34;: pytest.Session,
+        &#34;package&#34;: pytest.Package,
+        &#34;module&#34;: pytest.Module,
+        &#34;class&#34;: pytest.Class
+    }
+    # ref: https://github.com/RKrahl/pytest-dependency/blob/0.5.1/pytest_dependency.py#L77
+    # named_items : dict[(&#39;dep-scope&#39;, &#39;dep-name&#39;), list[(idx, &#39;test-item&#39;)]]
+    # picked : list[(idx, &#39;test-item&#39;)]
+    named_items, picked = dict(), list()
+    for idx, item in enumerate(all_items):
+        if item in items:
+            picked.append((idx, item))
+        try:
+            marker = item.get_closest_marker(&#39;dependency&#39;)
+            scope = marker.kwargs.get(&#39;scope&#39;, &#39;module&#39;)
+            node = item.getparent(scope_cls[scope])
+            named_items.setdefault((node, marker.kwargs[&#39;name&#39;]), []).append((idx, item))
+        except AttributeError:
+            continue
+        except KeyError:
+            nodeid = item.nodeid.replace(&#34;::()::&#34;, &#34;::&#34;)
+            if scope not in (&#34;session&#34;, &#34;package&#34;):
+                shift = 2 if scope == &#34;class&#34; else 1
+                nodeid = nodeid.split(&#34;::&#34;, shift)[shift]
+            named_items.setdefault((node, nodeid), []).append((idx, item))
+
+    def pick_depends(idx, item, items):
+        picked = []
+        try:
+            marker = item.get_closest_marker(&#39;dependency&#39;)
+            scope = marker.kwargs.get(&#39;scope&#39;, &#39;module&#39;)
+            node = item.getparent(scope_cls[scope])
+            for name in marker.kwargs[&#39;depends&#39;]:
+                picked.extend(items.get((node, name), []))
+        except (AttributeError, KeyError):
+            pass
+        return picked
+
+    depends = []  # list[(idx, &#39;test-item&#39;)]
+    while picked:
+        depends.append(picked.pop())
+        picked.extend(pick_depends(*depends[-1], named_items))
+
+    session.items = items = [it for idx, it in sorted(set(depends), key=lambda it: it[0])]
+    # deselected.extend(t for ts in named_items.values() for i, t in ts if t not in items)
+    deselected = [t for t in all_items if t not in items]
+    # update to let the report shows correct counts
+    config.pluginmanager.get_plugin(&#39;terminalreporter&#39;).stats[&#39;deselected&#39;] = deselected</code></pre>
 </details>
 </dd>
 <dt id="harvester_e2e_tests.conftest.pytest_configure"><code class="name flex">
@@ -761,53 +813,6 @@ def pytest_collection_modifyitems(config, items):
 <pre><code class="python">def pytest_configure(config):
     # Register marker as the format (marker, (description))
     markers = [
-        (&#39;public_network&#39;, (&#39;mark test to run only if public networking is available&#39;)),
-        (&#39;multi_node_scheduling&#39;, (
-            &#39;mark test to run only if we have a multi-node cluster&#39;
-            &#39; where some hosts have more resources then others in order to test VM&#39;
-            &#39; scheduling behavior&#39;)),
-        (&#39;host_management&#39;, (
-            &#39;mark test to run only if we have &#39;
-            &#39;host management (power_on.sh, power_off.sh, reboot.sh) &#39;
-            &#39;scripts provided. These tests are designed to test &#39;
-            &#39;scheduling resiliency and disaster recovery scenarios. &#39;)),
-        (&#39;backupnfs&#39;, (
-            &#39;mark test to run only the backup and restore&#39;
-            &#39;tests for NFS backup target&#39;)),
-        (&#39;backups3&#39;, (
-            &#39;mark test to run only the backup and restore&#39;
-            &#39;tests for S3 backup target&#39;)),
-        (&#39;imageupload&#39;, (&#39;marker to run imageupload test&#39;)),
-        (&#39;singlevmtest&#39;, (&#39;marker to run create single vm test&#39;)),
-        (&#39;multivmtest&#39;, (&#39;marker to run create multiple vms test&#39;)),
-        (&#39;windows_vm&#39;, (
-            &#39;marker to run only create vm test &#39;
-            &#39;using windows images&#39;)),
-        (&#39;usbvmtest&#39;, (&#39;marker to run only create vm test with usb&#39;)),
-        (&#39;nouserdata&#39;, (&#39;marker to run only create vm test with nouserdata&#39;)),
-        (&#39;images_p1&#39;, (&#39;mark test to run only to execute the P1 test for images&#39;)),
-        (&#39;images_p2&#39;, (&#39;mark test to run only to execute the P2 test for images&#39;)),
-        (&#39;terraform_provider_p1&#39;, (
-            &#39;mark test to run only to execute the P1 test for terraform provider&#39;)),
-        (&#39;imageupload&#39;, (&#39;mark test to run upload image&#39;)),
-        (&#39;virtual_machines_p1&#39;, (&#39;marker to run only P1 Virtual Machine test&#39;)),
-        (&#39;virtual_machines_p2&#39;, (&#39;marker to run only P2 Virtual Machine test&#39;)),
-        (&#39;network_p1&#39;, (&#39;marker to run only P1 Network test &#39;)),
-        (&#39;network_p2&#39;, (&#39;marker to run only P2 Network test &#39;)),
-        (&#39;volumes_p1&#39;, (&#39;mark test to run only P1 test for Volume&#39;)),
-        (&#39;volumes_p2&#39;, (&#39;mark test to run only P2 test for Volume&#39;)),
-        (&#39;authentication_p1&#39;, (&#39;mark test to run only P1 test for authentication&#39;)),
-        (&#39;backup_and_restore_p1&#39;, (
-            &#39;mark test to run only to execute the P1 test for Backup and Recovery&#39;)),
-        (&#39;backup_and_restore_p2&#39;, (
-            &#39;mark test to run only to execute the P2 test for Backup and Recovery&#39;)),
-        (&#39;terraform_provider_p1&#39;, (&#39;mark test to run only P1 test for terraform provider&#39;)),
-        (&#39;rancher_integration_with_external_rancher&#39;, (
-            &#39;mark Rancher integration tests with an external Rancher&#39;)),
-        (&#39;rke1&#39;, (&#39;marker to run rke1 integration tests &#39;)),
-        (&#39;rke2&#39;, (&#39;marker to run rke2 integration tests &#39;)),
-
-        # deprecated markers above would be removed.
         (&#34;skip_version_before&#34;, (
             &#34;mark test skipped when cluster version &lt; provided version&#34;)),
         (&#34;skip_version_after&#34;, (
@@ -830,9 +835,14 @@ def pytest_collection_modifyitems(config, items):
         (&#34;any_nodes&#34;, (&#34;{_r} tests which could be ran on clushter with any nodes&#34;)),
         (&#34;single_node&#34;, (&#34;{_r} tests which could only be ran on cluster with single node&#34;)),
         (&#34;three_nodes&#34;, (&#34;{_r} tests which could only be ran on cluster with three nodes&#34;)),
-        (&#39;rancher&#39;, (&#34;{_r} reancher integration tests&#34;)),
+        (&#39;rancher&#39;, (&#34;{_r} rancher integration tests&#34;)),
+        (&#39;rke1&#39;, (&#34;{_r} rancher RKE1 tests&#34;)),
+        (&#39;rke2&#39;, (&#34;{_r} rancher RKE2 tests&#34;)),
         (&#39;terraform&#39;, (&#34;{_r} terraform tests&#34;)),
         (&#39;virtualmachines&#39;, (&#39;{_r} virtualmachines tests&#39;)),
+        (&#39;backup_target&#39;, (&#39;{_r} backup-target tests&#39;)),
+        (&#39;S3&#39;, (&#39;{_r} backup-target tests with S3&#39;)),
+        (&#39;NFS&#39;, (&#39;{_r} backup-target tests with NFS&#39;))
     ]
 
     for m, msg in markers:

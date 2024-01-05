@@ -27,11 +27,14 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import StringIO
 from tempfile import NamedTemporaryFile
 from pathlib import Path
 from subprocess import run, PIPE
+from typing import Callable
+from time import sleep
+from inspect import getfullargspec
 
 import pytest
 from paramiko import SSHClient, RSAKey, MissingHostKeyPolicy
@@ -68,6 +71,11 @@ def sleep_timeout(request):
 
 
 @pytest.fixture(scope=&#34;session&#34;)
+def rancher_wait_timeout(request):
+    return request.config.getoption(&#34;--rancher-cluster-wait-timeout&#34;, 1800)
+
+
+@pytest.fixture(scope=&#34;session&#34;)
 def host_state(request):
     class HostState:
         files = (&#34;power_off.sh&#34;, &#34;power_on.sh&#34;, &#34;reboot.sh&#34;)  # [False, True, -1]
@@ -92,7 +100,14 @@ def host_state(request):
 
 @pytest.fixture(scope=&#39;module&#39;)
 def unique_name():
+    &#34;&#34;&#34;Default unique name&#34;&#34;&#34;
     return datetime.now().strftime(&#34;%Hh%Mm%Ss%f-%m-%d&#34;)
+
+
+@pytest.fixture(scope=&#39;module&#39;)
+def gen_unique_name():
+    &#34;&#34;&#34;Generate unique name on-demand&#34;&#34;&#34;
+    return lambda: datetime.now().strftime(&#34;%Hh%Mm%Ss%f-%m-%d&#34;)
 
 
 @pytest.fixture(scope=&#34;module&#34;)
@@ -167,21 +182,17 @@ def expected_settings():
     }
 
 
-@pytest.fixture(scope=&#34;session&#34;)
-def k8s_version(request):
-    return request.config.getoption(&#34;--kubernetes-version&#34;)
-
-
 @pytest.fixture(autouse=True)
 def skip_version_before(request, api_client):
     mark = request.node.get_closest_marker(&#34;skip_version_before&#34;)
     if mark:
         cluster_ver = api_client.cluster_version
-        if &#39;-head&#39; not in cluster_ver.public and parse_version(mark.args[0]) &gt; cluster_ver:
-            pytest.skip(
-                f&#34;Cluster Version `{api_client.cluster_version}` is not included&#34;
-                f&#34; in the supported version (most &gt;= `{mark.args[0]}`)&#34;
-            )
+        for target_ver in mark.args:
+            if &#39;-head&#39; not in cluster_ver.public and parse_version(target_ver) &gt; cluster_ver:
+                return pytest.skip(
+                    f&#34;Cluster Version `{api_client.cluster_version}` is not included&#34;
+                    f&#34; in the supported version (most &gt;= `{target_ver}`)&#34;
+                )
 
 
 @pytest.fixture(autouse=True)
@@ -189,11 +200,12 @@ def skip_version_after(request, api_client):
     mark = request.node.get_closest_marker(&#34;skip_version_after&#34;)
     if mark:
         cluster_ver = api_client.cluster_version
-        if not hasattr(cluster_ver, &#39;major&#39;) or parse_version(mark.args[0]) &lt;= cluster_ver:
-            pytest.skip(
-                f&#34;Cluster Version `{api_client.cluster_version}` is not included&#34;
-                f&#34; in the supported version (most &lt; `{mark.args[0]}`)&#34;
-            )
+        for target_ver in mark.args:
+            if not hasattr(cluster_ver, &#39;major&#39;) or parse_version(target_ver) &lt;= cluster_ver:
+                return pytest.skip(
+                    f&#34;Cluster Version `{api_client.cluster_version}` is not included&#34;
+                    f&#34; in the supported version (most &lt; `{target_ver}`)&#34;
+                )
 
 
 @pytest.fixture(scope=&#34;session&#34;)
@@ -274,7 +286,52 @@ def host_shell(request):
             self.exec_command(&#39;sudo mv _config /etc/ssh/sshd_config&#39;
                               &#39; &amp;&amp; sudo systemctl restart sshd&#39;)
 
-    return HostShell(&#39;rancher&#39;, password, pkey)</code></pre>
+    return HostShell(&#39;rancher&#39;, password, pkey)
+
+
+@pytest.fixture(scope=&#34;session&#34;)
+def polling_for(wait_timeout, sleep_timeout):
+    # TODO: Try to redesign refer to multiprocessing package (e.g. apply_async and map_async)
+    def _polling_for(subject: str,
+                     checker: Callable[..., bool],
+                     poller: Callable, *args,
+                     timeout=wait_timeout):
+        &#34;&#34;&#34; Polling expected confition for `timeout`s every `sleep_timeout`s
+
+        Arguments:
+          subject: str, what is waiting for
+          checker: Callable, check `poller` output and returns bool
+          args: list, [*poller_args, testee]
+          poller: Callable, poller(*poller_args, testee) for each testee
+
+        Returns:
+          Any: `poller` output if qualified by `checker`
+
+        Raises:
+          AssertionError: if still NOT qualified within `timeout`s
+        &#34;&#34;&#34;
+        *poller_args, testee = args
+        testees = testee if isinstance(testee, list) else [testee]
+        checker_args_len = len(getfullargspec(checker).args)
+
+        endtime = datetime.now() + timedelta(seconds=timeout)
+        while endtime &gt; datetime.now():
+            for testee in testees[:]:
+                output = poller(*poller_args, testee)
+                # unpack poller output according to checker signature
+                qualified = checker(*output) if checker_args_len &gt; 1 else checker(output)
+                if qualified:
+                    testees.remove(testee)
+            if not testees:
+                return output
+            sleep(sleep_timeout)
+        else:
+            raise AssertionError(
+                f&#39;Timeout {timeout}s waiting for {subject}\n&#39;
+                f&#39;Got error: {output}&#39;
+            )
+
+    return _polling_for</code></pre>
 </details>
 </section>
 <section>
@@ -362,6 +419,21 @@ def fake_image_file():
         f.write(b&#34;\0&#34;)
         f.seek(0)
         yield Path(f.name)</code></pre>
+</details>
+</dd>
+<dt id="harvester_e2e_tests.fixtures.api_client.gen_unique_name"><code class="name flex">
+<span>def <span class="ident">gen_unique_name</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generate unique name on-demand</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@pytest.fixture(scope=&#39;module&#39;)
+def gen_unique_name():
+    &#34;&#34;&#34;Generate unique name on-demand&#34;&#34;&#34;
+    return lambda: datetime.now().strftime(&#34;%Hh%Mm%Ss%f-%m-%d&#34;)</code></pre>
 </details>
 </dd>
 <dt id="harvester_e2e_tests.fixtures.api_client.host_shell"><code class="name flex">
@@ -486,8 +558,8 @@ def host_state(request):
     return HostState(request.config.getoption(&#34;--node-scripts-location&#34;))</code></pre>
 </details>
 </dd>
-<dt id="harvester_e2e_tests.fixtures.api_client.k8s_version"><code class="name flex">
-<span>def <span class="ident">k8s_version</span></span>(<span>request)</span>
+<dt id="harvester_e2e_tests.fixtures.api_client.polling_for"><code class="name flex">
+<span>def <span class="ident">polling_for</span></span>(<span>wait_timeout, sleep_timeout)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -496,8 +568,62 @@ def host_state(request):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@pytest.fixture(scope=&#34;session&#34;)
-def k8s_version(request):
-    return request.config.getoption(&#34;--kubernetes-version&#34;)</code></pre>
+def polling_for(wait_timeout, sleep_timeout):
+    # TODO: Try to redesign refer to multiprocessing package (e.g. apply_async and map_async)
+    def _polling_for(subject: str,
+                     checker: Callable[..., bool],
+                     poller: Callable, *args,
+                     timeout=wait_timeout):
+        &#34;&#34;&#34; Polling expected confition for `timeout`s every `sleep_timeout`s
+
+        Arguments:
+          subject: str, what is waiting for
+          checker: Callable, check `poller` output and returns bool
+          args: list, [*poller_args, testee]
+          poller: Callable, poller(*poller_args, testee) for each testee
+
+        Returns:
+          Any: `poller` output if qualified by `checker`
+
+        Raises:
+          AssertionError: if still NOT qualified within `timeout`s
+        &#34;&#34;&#34;
+        *poller_args, testee = args
+        testees = testee if isinstance(testee, list) else [testee]
+        checker_args_len = len(getfullargspec(checker).args)
+
+        endtime = datetime.now() + timedelta(seconds=timeout)
+        while endtime &gt; datetime.now():
+            for testee in testees[:]:
+                output = poller(*poller_args, testee)
+                # unpack poller output according to checker signature
+                qualified = checker(*output) if checker_args_len &gt; 1 else checker(output)
+                if qualified:
+                    testees.remove(testee)
+            if not testees:
+                return output
+            sleep(sleep_timeout)
+        else:
+            raise AssertionError(
+                f&#39;Timeout {timeout}s waiting for {subject}\n&#39;
+                f&#39;Got error: {output}&#39;
+            )
+
+    return _polling_for</code></pre>
+</details>
+</dd>
+<dt id="harvester_e2e_tests.fixtures.api_client.rancher_wait_timeout"><code class="name flex">
+<span>def <span class="ident">rancher_wait_timeout</span></span>(<span>request)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@pytest.fixture(scope=&#34;session&#34;)
+def rancher_wait_timeout(request):
+    return request.config.getoption(&#34;--rancher-cluster-wait-timeout&#34;, 1800)</code></pre>
 </details>
 </dd>
 <dt id="harvester_e2e_tests.fixtures.api_client.skip_version_after"><code class="name flex">
@@ -514,11 +640,12 @@ def skip_version_after(request, api_client):
     mark = request.node.get_closest_marker(&#34;skip_version_after&#34;)
     if mark:
         cluster_ver = api_client.cluster_version
-        if not hasattr(cluster_ver, &#39;major&#39;) or parse_version(mark.args[0]) &lt;= cluster_ver:
-            pytest.skip(
-                f&#34;Cluster Version `{api_client.cluster_version}` is not included&#34;
-                f&#34; in the supported version (most &lt; `{mark.args[0]}`)&#34;
-            )</code></pre>
+        for target_ver in mark.args:
+            if not hasattr(cluster_ver, &#39;major&#39;) or parse_version(target_ver) &lt;= cluster_ver:
+                return pytest.skip(
+                    f&#34;Cluster Version `{api_client.cluster_version}` is not included&#34;
+                    f&#34; in the supported version (most &lt; `{target_ver}`)&#34;
+                )</code></pre>
 </details>
 </dd>
 <dt id="harvester_e2e_tests.fixtures.api_client.skip_version_before"><code class="name flex">
@@ -535,11 +662,12 @@ def skip_version_before(request, api_client):
     mark = request.node.get_closest_marker(&#34;skip_version_before&#34;)
     if mark:
         cluster_ver = api_client.cluster_version
-        if &#39;-head&#39; not in cluster_ver.public and parse_version(mark.args[0]) &gt; cluster_ver:
-            pytest.skip(
-                f&#34;Cluster Version `{api_client.cluster_version}` is not included&#34;
-                f&#34; in the supported version (most &gt;= `{mark.args[0]}`)&#34;
-            )</code></pre>
+        for target_ver in mark.args:
+            if &#39;-head&#39; not in cluster_ver.public and parse_version(target_ver) &gt; cluster_ver:
+                return pytest.skip(
+                    f&#34;Cluster Version `{api_client.cluster_version}` is not included&#34;
+                    f&#34; in the supported version (most &gt;= `{target_ver}`)&#34;
+                )</code></pre>
 </details>
 </dd>
 <dt id="harvester_e2e_tests.fixtures.api_client.sleep_timeout"><code class="name flex">
@@ -612,13 +740,14 @@ def support_bundle_state():
 <span>def <span class="ident">unique_name</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Default unique name</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@pytest.fixture(scope=&#39;module&#39;)
 def unique_name():
+    &#34;&#34;&#34;Default unique name&#34;&#34;&#34;
     return datetime.now().strftime(&#34;%Hh%Mm%Ss%f-%m-%d&#34;)</code></pre>
 </details>
 </dd>
@@ -657,9 +786,11 @@ def wait_timeout(request):
 <li><code><a title="harvester_e2e_tests.fixtures.api_client.api_client" href="#harvester_e2e_tests.fixtures.api_client.api_client">api_client</a></code></li>
 <li><code><a title="harvester_e2e_tests.fixtures.api_client.expected_settings" href="#harvester_e2e_tests.fixtures.api_client.expected_settings">expected_settings</a></code></li>
 <li><code><a title="harvester_e2e_tests.fixtures.api_client.fake_image_file" href="#harvester_e2e_tests.fixtures.api_client.fake_image_file">fake_image_file</a></code></li>
+<li><code><a title="harvester_e2e_tests.fixtures.api_client.gen_unique_name" href="#harvester_e2e_tests.fixtures.api_client.gen_unique_name">gen_unique_name</a></code></li>
 <li><code><a title="harvester_e2e_tests.fixtures.api_client.host_shell" href="#harvester_e2e_tests.fixtures.api_client.host_shell">host_shell</a></code></li>
 <li><code><a title="harvester_e2e_tests.fixtures.api_client.host_state" href="#harvester_e2e_tests.fixtures.api_client.host_state">host_state</a></code></li>
-<li><code><a title="harvester_e2e_tests.fixtures.api_client.k8s_version" href="#harvester_e2e_tests.fixtures.api_client.k8s_version">k8s_version</a></code></li>
+<li><code><a title="harvester_e2e_tests.fixtures.api_client.polling_for" href="#harvester_e2e_tests.fixtures.api_client.polling_for">polling_for</a></code></li>
+<li><code><a title="harvester_e2e_tests.fixtures.api_client.rancher_wait_timeout" href="#harvester_e2e_tests.fixtures.api_client.rancher_wait_timeout">rancher_wait_timeout</a></code></li>
 <li><code><a title="harvester_e2e_tests.fixtures.api_client.skip_version_after" href="#harvester_e2e_tests.fixtures.api_client.skip_version_after">skip_version_after</a></code></li>
 <li><code><a title="harvester_e2e_tests.fixtures.api_client.skip_version_before" href="#harvester_e2e_tests.fixtures.api_client.skip_version_before">skip_version_before</a></code></li>
 <li><code><a title="harvester_e2e_tests.fixtures.api_client.sleep_timeout" href="#harvester_e2e_tests.fixtures.api_client.sleep_timeout">sleep_timeout</a></code></li>
