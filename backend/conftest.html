@@ -277,11 +277,18 @@ def pytest_addoption(parser):
         default=config_data.get(&#39;terraform-provider-harvester&#39;),
         help=(&#39;Version of Terraform Harvester Provider&#39;)
     )
+    parser.addoption(
+        &#39;--terraform-provider-rancher&#39;,
+        action=&#39;store&#39;,
+        default=config_data.get(&#39;terraform-provider-rancher&#39;),
+        help=(&#39;Version of Terraform Rancher Provider&#39;)
+    )
 
 
 def pytest_configure(config):
     # Register marker as the format (marker, (description))
     markers = [
+        (&#34;skip_version_if&#34;, &#34;Mark test skipped when cluster version hit the condition&#34;),
         (&#34;skip_version_before&#34;, (
             &#34;mark test skipped when cluster version &lt; provided version&#34;)),
         (&#34;skip_version_after&#34;, (
@@ -679,6 +686,12 @@ def pytest_collection_modifyitems(session, config, items):
         action=&#39;store&#39;,
         default=config_data.get(&#39;terraform-provider-harvester&#39;),
         help=(&#39;Version of Terraform Harvester Provider&#39;)
+    )
+    parser.addoption(
+        &#39;--terraform-provider-rancher&#39;,
+        action=&#39;store&#39;,
+        default=config_data.get(&#39;terraform-provider-rancher&#39;),
+        help=(&#39;Version of Terraform Rancher Provider&#39;)
     )</code></pre>
 </details>
 </dd>
@@ -813,6 +826,7 @@ def pytest_collection_modifyitems(session, config, items):
 <pre><code class="python">def pytest_configure(config):
     # Register marker as the format (marker, (description))
     markers = [
+        (&#34;skip_version_if&#34;, &#34;Mark test skipped when cluster version hit the condition&#34;),
         (&#34;skip_version_before&#34;, (
             &#34;mark test skipped when cluster version &lt; provided version&#34;)),
         (&#34;skip_version_after&#34;, (

@@ -953,6 +953,13 @@
       <description> Related issues: #1520 incorrect title and favicon Verification Steps Log into Harvester Check page title and favicon on each of these pages dashboard main page settings support Volumes SSH Keys Host info Expected Results Harvester favicon and title should show on each page </description>
     </item>
     <item>
+      <title>Check Harvester CloudInit CRDs within Harvester, Terraform &amp; Rancher</title>
+      <link>https://harvester.github.io/tests/manual/misc/3902-elemental-cloud-init-harvester-crds/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://harvester.github.io/tests/manual/misc/3902-elemental-cloud-init-harvester-crds/</guid>
+      <description>Related issues: #3902 support elemental cloud-init via harvester-node-manager Testing With Terraform TBD Testing From Harvester UI TBD Testing From Rancher Fleet UI / Harvester Fleet Controller TBD Testing w/ Harvester Kubeconfig via Kubectl &amp;amp; K9s (or similar tool) Pre-Reqs: Have an available multi-node Harvester cluster, w/out your ssh-key present on any nodes Provision cluster however is easiest K9s (or other similar kubectl tooling) kubectl audit elemental toolkit for an understanding of stages audit harvester configuration to correlate properties to elemental-toolkit based stages / functions Negative Tests: Validate Non-YAML Files Get .</description>
+    </item>
+    <item>
       <title>Check IPAM configuration with IPAM</title>
       <link>https://harvester.github.io/tests/manual/_incoming/1697-ipam-load-balancer/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -2185,6 +2192,13 @@
       <description> After successful installation of Harvester using Iso, on navigating to UI, user should be prompted to change the password. Verify the password rules Expected Results User should be able to login </description>
     </item>
     <item>
+      <title>Fleet support with Harvester</title>
+      <link>https://harvester.github.io/tests/manual/advanced/fleet-support-with-harvester/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://harvester.github.io/tests/manual/advanced/fleet-support-with-harvester/</guid>
+      <description>Fleet Support Pathways Fleet Support is enabled out of the box with Harvester, no Rancher integration needed, as Fleet Support does not need any Rancher integration to function Fleet Support can be used from within Rancher w/ Harvester Fleet Support w/ Rancher Prerequisites Harvester cluster is imported into Rancher. Rancher Feature Flag harvester-baremetal-container-workload is enabled. Harvester cluster is available to view via the Explore Cluster section of Rancher. Explore the Harvester cluster: Toggle &amp;ldquo;All Namespaces&amp;rdquo; to be selected Search for &amp;amp; &amp;ldquo;star&amp;rdquo; (marking favorite for ease of navigation): Git Repo Git Job Git Restrictions Fleet Support w/out Rancher Prerequisites An active Harvester Cluster Kubeconfig Additional Prerequisites Fork ibrokethecloud&amp;rsquo;s Harvester Fleet Demo into your own personal GitHub Repository Take a look at the different Harvester API Resources as YAML will be scaffolded to reflect those objects respectively Additional Prerequisites Airgapped, if desired Have an Airgapped GitLab Server Running somewhere with a Repo that takes the shape of ibrokethecloud&amp;rsquo;s Harvester Fleet Demo (setting up AirGapped GitLab Server is outside of this scope) Additional Prerequisites (Private Repository Testing), if desired Private Git Repo Key, will need to be added to -n fleet-local namespace Build a private GitHub Repo Add similar content to what ibrokethecloud&amp;rsquo;s Harvester Fleet Demo holds but take into consideration the following ( references: GitRepo CRD &amp;amp; Rancher Fleet Private Git Repo Blurb ): building a &amp;ldquo;separate&amp;rdquo; SINGLE REPOSITORY ONLY (zero-trust based) SSH Key Via something like: ssh-keygen -t rsa -b 4096 -m pem -C &amp;#34;testing-test-key-for-private-repo-deploy-key@email.</description>
+    </item>
+    <item>
       <title>Function keys on web VNC interface</title>
       <link>https://harvester.github.io/tests/manual/_incoming/1461-function-keys-on-web-vnc-interface/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -2616,7 +2630,7 @@
       <link>https://harvester.github.io/tests/manual/hosts/q-maintenance-mode-migrate-back-vms/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>https://harvester.github.io/tests/manual/hosts/q-maintenance-mode-migrate-back-vms/</guid>
-      <description>Migrate all VMs back to host that were migrated off Expected Results I&amp;rsquo;m not sure about the expected behavior on this. I&amp;rsquo;m checking.</description>
+      <description>Prerequisite: Have a Harvester cluster with at least 2 nodes setup.&#xA;Test Steps: Given Create a vm with node selector lets say node-1.&#xA;And Create a vm without node selector on node-1.&#xA;AND Write some data into both the VMs.&#xA;When Put the host node-1 into maintenance mode.&#xA;Then All the Vms on node-1 should be migrated to other nodes or the node should show warning that the vm with node selector can&amp;rsquo;t migrate.</description>
     </item>
     <item>
       <title>Migrate to Node without replicaset</title>
@@ -3820,7 +3834,7 @@
       <link>https://harvester.github.io/tests/manual/volumes/1334-evict-disks-check-vms/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>https://harvester.github.io/tests/manual/volumes/1334-evict-disks-check-vms/</guid>
-      <description>Related issues: #1334 Volumes fail with Scheduling Failure after evicting disc on multi-disc node Verification Steps Created 3 node Harvester setup with ipxe example in KVM/libvirt Added formatted disk to node0 VM Created three VMs on node0 Created large files on three VMs to see where they were located with dd if=/dev/urandom of=file1.txt count=5192 bs=1M Checked Longhorn to be sure that some VMs were on new disk Deleted disk from Harvester Checked Longhorn to be sure that disk was marked for eviction Verified that VMs were still available while evicting replicas by running commands from serial console/SSH Verified that disk was removed from Longhorn and VMS were still up.</description>
+      <description>Related issues #1334 Volumes fail with Scheduling Failure after evicting disc on multi-disc node #5307 Replicas should be evicted and rescheduled to other disks before removing extrak disk Verification Steps Created 3 nodes Harvester.&#xA;Added formatted disk (called disk A) to node0 VM in the harvester node page.&#xA;Added disk tag test on following disk in the longhorn page.&#xA;disk A of node0 root disk of node1 root disk of node2 Created storage class with disk tag test.</description>
     </item>
     <item>
       <title>Verify the external link at the bottom of the page</title>
