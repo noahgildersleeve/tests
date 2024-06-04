@@ -4,7 +4,7 @@
     <title>Deployment Tests for Harvester on Harvester manual test cases</title>
     <link>https://harvester.github.io/tests/manual/deployment/</link>
     <description>Recent content in Deployment Tests for Harvester on Harvester manual test cases</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo</generator>
     <language>en-us</language>
     <atom:link href="https://harvester.github.io/tests/manual/deployment/index.xml" rel="self" type="application/rss+xml" />
     <item>
@@ -43,6 +43,13 @@
       <description>Related issues: #1590 Harvester installer can&amp;rsquo;t resolve hostnames Known Issues When supplying multiple ip=&amp;hellip; kernel cmdline arguments, only one of them will be configured by dracut, therefore only the configured interface would have ifcfg generated. So for now, we can&amp;rsquo;t support multiple ip=&amp;hellip; kernel cmdline arguments&#xA;Verification Steps Because configuring the network of the installation environment only works with PXE installation, you could use ipxe-examples/vagrant-pxe-harvester/ to set it up. Be sure you can run setup_harvester.</description>
     </item>
     <item>
+      <title>Change DNS settings on vagrant-pxe-harvester install</title>
+      <link>https://harvester.github.io/tests/manual/deployment/ipxe-dns-change/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://harvester.github.io/tests/manual/deployment/ipxe-dns-change/</guid>
+      <description>Install using ipxe-examples Also change harvester_network_config.dns_servers in the settings.yml for the vagrant environment before deploy. This will change the DNS in the harvester OS config. If you also want to change the DNS for everything in the DHCP scope change harvester_network_config.dhcp_server.dns_server. Expected Results On completion of the installation, Harvester should provide the management url and show status. SSH into one of the nodes. If you use the default configuration you can use ssh rancher@192.</description>
+    </item>
+    <item>
       <title>Http proxy setting on harvester</title>
       <link>https://harvester.github.io/tests/manual/deployment/http-proxy-setting-harvester/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -68,21 +75,21 @@
       <link>https://harvester.github.io/tests/manual/deployment/install-bare-metal-iso/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>https://harvester.github.io/tests/manual/deployment/install-bare-metal-iso/</guid>
-      <description>Install using ISO image https://docs.harvesterhci.io/v0.3/install/iso-install/&#xA;Expected Results On completion of the installation, Harvester should provide the management url and show status. Harvester and Longhorn components should be up and running in the cluster. Verify the memory, cpu and storage size shown on the Harvester UI </description>
-    </item>
-    <item>
-      <title>Install Harvester on a bare Metal node using ISO image</title>
-      <link>https://harvester.github.io/tests/manual/deployment/install-nested-virtualization/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://harvester.github.io/tests/manual/deployment/install-nested-virtualization/</guid>
-      <description>Install using ISO image https://docs.harvesterhci.io/v0.3/install/iso-install/&#xA;Expected Results On completion of the installation, Harvester should provide the management url and show status. Harvester and Longhorn components should be up and running in the cluster. Verify the memory, cpu and storage size shown on the Harvester UI </description>
+      <description>Install using ISO image&#xA;Expected Results On completion of the installation, Harvester should provide the management url and show status. Harvester and Longhorn components should be up and running in the cluster. Verify the memory, cpu and storage size shown on the Harvester UI </description>
     </item>
     <item>
       <title>Install Harvester on a bare Metal node using PXE boot (e2e_be)</title>
       <link>https://harvester.github.io/tests/manual/deployment/install-bare-metal-pxe/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>https://harvester.github.io/tests/manual/deployment/install-bare-metal-pxe/</guid>
-      <description>Install Harvester using PXE boot https://docs.harvesterhci.io/v0.3/install/pxe-boot-install/&#xA;Expected Results On completion of the installation, Harvester should provide the management url and show status. Harvester and Longhorn components should be up and running in the cluster. Verify the memory, cpu and storage size shown on the Harvester UI </description>
+      <description>Install Harvester using PXE boot&#xA;Expected Results On completion of the installation, Harvester should provide the management url and show status. Harvester and Longhorn components should be up and running in the cluster. Verify the memory, cpu and storage size shown on the Harvester UI </description>
+    </item>
+    <item>
+      <title>Install Harvester on a virtual nested node using ISO image</title>
+      <link>https://harvester.github.io/tests/manual/deployment/install-nested-virtualization/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://harvester.github.io/tests/manual/deployment/install-nested-virtualization/</guid>
+      <description>Install using ISO image&#xA;Expected Results On completion of the installation, Harvester should provide the management url and show status. Harvester and Longhorn components should be up and running in the cluster. Verify the memory, cpu and storage size shown on the Harvester UI </description>
     </item>
     <item>
       <title>Install Harvester on NVMe SSD</title>
@@ -180,7 +187,7 @@
       <link>https://harvester.github.io/tests/manual/deployment/verify-installer-options/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>https://harvester.github.io/tests/manual/deployment/verify-installer-options/</guid>
-      <description> Verify the following options available while installing the Harvester is working Installation target Cluster token Password VIP NTP Address Expected Results Should show all the disks available. Verify the min and max length acceptable for cluster token. Verify the password rule </description>
+      <description> Verify the following options available while installing the Harvester is working Installation target Node IP Cluster token Password DNS Server VIP HTTP Proxy NTP Address Expected Results Should show all the disks available. Verify the min and max length acceptable for cluster token. Verify the password rule </description>
     </item>
     <item>
       <title>Verify the Proxy configuration</title>
@@ -194,7 +201,7 @@
       <link>https://harvester.github.io/tests/manual/deployment/verify-vip-load-balancer/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>https://harvester.github.io/tests/manual/deployment/verify-vip-load-balancer/</guid>
-      <description> Install Harvester on one Node Install with VIP pulling from DHCP Verify that IP is assigned via DHCP Add at least one additional node Use VIP address as management address for adding node Finish install of additional nodes Create new VM Connect to VM via web console Expected Results Install of all nodes should complete New nodes should show up in hosts list via web UI at VIP VMs should create Console should open </description>
+      <description>Case DHCP Install Harvester on one Node Install with VIP pulling from DHCP Verify that IP is assigned via DHCP Add at least one additional node Use VIP address as management address for adding node Finish install of additional nodes Create new VM Connect to VM via web console Case Static IP Install Harvester on one Node Install with VIP set statically Verify that IP is assigned correctly Add at least one additional node Use VIP address as management address for adding node Finish install of additional nodes Create new VM Connect to VM via web console Expected Results Install of all nodes should complete New nodes should show up in hosts list via web UI at VIP VMs should create Console should open </description>
     </item>
   </channel>
 </rss>

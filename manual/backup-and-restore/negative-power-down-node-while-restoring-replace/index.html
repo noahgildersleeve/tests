@@ -375,7 +375,13 @@
   
     <ul>
 
+  <li><a href="https://harvester.github.io/tests/manual/advanced/addons/5337-enable-addons-check-deployment/">Enable Harvester addons and check deployment state</a></li>
+  
+
   <li><a href="https://harvester.github.io/tests/manual/advanced/addons/pci-devices-controller/">PCI Devices Controller</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/advanced/addons/2764-vgpu/">vGPU/SR-IOV GPU</a></li>
   
 
 </ul>
@@ -598,6 +604,9 @@
   <li><a href="https://harvester.github.io/tests/manual/deployment/1590-change-dns-server-for-install/">Change DNS servers while installing</a></li>
   
 
+  <li><a href="https://harvester.github.io/tests/manual/deployment/ipxe-dns-change/">Change DNS settings on vagrant-pxe-harvester install</a></li>
+  
+
   <li><a href="https://harvester.github.io/tests/manual/deployment/http-proxy-setting-harvester/">Http proxy setting on harvester</a></li>
   
 
@@ -610,10 +619,10 @@
   <li><a href="https://harvester.github.io/tests/manual/deployment/install-bare-metal-iso/">Install Harvester on a bare Metal node using ISO image</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/deployment/install-nested-virtualization/">Install Harvester on a bare Metal node using ISO image</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/deployment/install-bare-metal-pxe/">Install Harvester on a bare Metal node using PXE boot (e2e_be)</a></li>
   
 
-  <li><a href="https://harvester.github.io/tests/manual/deployment/install-bare-metal-pxe/">Install Harvester on a bare Metal node using PXE boot (e2e_be)</a></li>
+  <li><a href="https://harvester.github.io/tests/manual/deployment/install-nested-virtualization/">Install Harvester on a virtual nested node using ISO image</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/deployment/install_on_nvme/">Install Harvester on NVMe SSD</a></li>
@@ -1769,6 +1778,9 @@
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/edit-vm-and-insert-ssh-and-check-the-ssh-key-is-accepted-for-the-login/">Edit vm and insert ssh and check the ssh key is accepted for the login (e2e_be_fe)</a></li>
   
 
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/5264-edit-vm-config-after-eject-cdrom-delete-volume/">Edit vm config after Eject CDROM and delete volume</a></li>
+  
+
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/negative-edit-vm-form/">Edit VM Form Negative</a></li>
   
 
@@ -1827,6 +1839,9 @@
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/1660-volume-unit-vm-details/">Verify that vm-force-reset-policy works</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/5266-view-log-function/">View log function on virtual machine</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/vm_on_error_state/">VM on error state</a></li>
@@ -1948,13 +1963,49 @@
   <h1 id="title">Negative Power down the node where the VM is getting replaced by the restore</h1>
   <div>
     <article id="content">
-       <ol>
-<li>Initiate a restore with existing VM.</li>
-<li>While the restore is in progress and VM is starting on a node, shut down the node</li>
+       <ul>
+<li>Related issues
+<ul>
+<li><a href="https://github.com/harvester/tests/issues/1263">tests#1263</a> [ReleaseTesting] Negative Power down the node where the VM is getting replaced by the restore</li>
+</ul>
+</li>
+</ul>
+<h2 id="verification-steps">Verification Steps</h2>
+<ol>
+<li>
+<p>Setup a 3 nodes harvester</p>
+</li>
+<li>
+<p>Create a VM w/ extra disk and some data</p>
+</li>
+<li>
+<p>Backup and shutdown VM</p>
+</li>
+<li>
+<p>Start to observe <code>pod/virt-launcher-VMNAME</code> to get the node VM restoring on for next step.</p>
+</li>
+<li>
+<p>Initiate a restore with existing VM, get node info from <code>pod/virt-launcher-VMNAME</code>.
+<img src="https://github.com/harvester/tests/assets/2773781/eb3750eb-26a1-4785-b2d5-a41a4c749dcb" alt="image"></p>
+</li>
+<li>
+<p>While the restore is in progress and VM is starting on a node, shut down the node</p>
+</li>
 </ol>
 <h2 id="expected-results">Expected Results</h2>
 <ol>
-<li>You should get an error</li>
+<li>
+<p>1st restore should fail
+<img src="https://github.com/harvester/tests/assets/2773781/49fcf50e-6c84-4198-bc91-b42cbc123c51" alt="image"></p>
+</li>
+<li>
+<p>VM should be restore to another node and <code>Running</code>
+<img src="https://github.com/harvester/tests/assets/2773781/a316c185-3a43-44be-a9d3-a65480837b18" alt="image"></p>
+</li>
+<li>
+<p>Test data still available and not broken
+<img src="https://github.com/harvester/tests/assets/2773781/62cd07d1-9ba5-4ff9-9120-41695beb966d" alt="image"></p>
+</li>
 </ol>
 
     </article>
