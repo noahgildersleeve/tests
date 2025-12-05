@@ -483,3 +483,80 @@ spec:
                 f"Failed to disable addon {self.addon_id} with "
                 f"API Status({code}): {data}"
             )
+
+@pytest.mark.p1
+@pytest.mark.addons
+class TestPCIDeviceControllerAddon:
+    """
+    Test PCI Device Controller
+    Note: This is an experimental addon which is not installed in Harvester
+    by default.
+
+    Reference: https://docs.harvesterhci.io/v1.6/advanced/addons/pcidevices/
+    """
+
+    addon_id = 'harvester-system/pcidevices-controller'
+
+    @pytest.mark.dependency(name="pci_device_enable")
+    def test_enable_pci_device_controller_addon(self, api_client, wait_timeout):
+        """
+        Test enabling PCI Device Controller addon
+
+        Steps:
+            1. Enable the pcidevices-controller addon
+            2. Wait for addon to be deployed successfully
+            3. Verify addon status changes to deployed
+
+        Expected Result:
+            - Addon should be enabled
+            - Status should be 'deployed' or 'AddonDeploySuccessful'
+            - DHCP controller should be ready to manage VM IP allocations
+        """
+        code, data = api_client.addons.enable(self.addon_id)
+
+        assert 200 == code, (code, data)
+        assert data.get('spec', {}).get('enabled', False), (code, data)
+
+        endtime = datetime.now() + timedelta(seconds=wait_timeout)
+        while endtime > datetime.now():
+            code, data = api_client.addons.get(self.addon_id)
+            status = data.get('status', {}).get('status', "")
+            if status in ("deployed", "AddonDeploySuccessful"):
+                break
+            sleep(5)
+        else:
+            raise AssertionError(
+                f"Failed to enable addon {self.addon_id} with "
+                f"{wait_timeout} timed out\n"
+                f"API Status({code}): {data}"
+            )
+    @pytest.mark.dependency(depends=["pci_device_enable"])
+    def test_disable_vm_dhcp_addon(self, api_client, wait_timeout):
+        """
+        Test disabling PCI Device Controller addon
+
+        Steps:
+            1. Disable the pcidevices-controller addon
+            2. Wait for addon to be disabled
+            3. Verify addon status changes to disabled
+
+        Expected Result:
+            - Addon should be disabled
+            - Status should contain 'Disabled'
+        """
+        code, data = api_client.addons.disable(self.addon_id)
+
+        assert 200 == code, (code, data)
+        assert not data.get('spec', {}).get('enabled', True), (code, data)
+
+        endtime = datetime.now() + timedelta(seconds=wait_timeout)
+        while endtime > datetime.now():
+            code, data = api_client.addons.get(self.addon_id)
+            if "Disabled" in data.get('status', {}).get('status', ""):
+                break
+            sleep(5)
+        else:
+            raise AssertionError(
+                f"Failed to disable addon {self.addon_id} with "
+                f"API Status({code}): {data}"
+            )
