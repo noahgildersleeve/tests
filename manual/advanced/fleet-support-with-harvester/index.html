@@ -581,7 +581,16 @@
   <li><a href="https://harvester.github.io/tests/manual/backup-and-restore/restore-middle-backup-chained-backup/">Restore middle backup in chained backup</a></li>
   
 
+  <li><a href="https://harvester.github.io/tests/manual/backup-and-restore/4604-restore-snapshot-restored-from-backup/">Restore the snapshot when the vm already been restored from backup</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/backup-and-restore/4907-vm-backup-restore-longhorn-1.5-plus/">VM backup restore use Longhorn v1.5+ attach/detach mechanism</a></li>
+  
+
   <li><a href="https://harvester.github.io/tests/manual/backup-and-restore/vm_backup_metadata/">VM Backup with metadata</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/backup-and-restore/4954-cannot-resotre-new-vm-have-snapshot/">VM have snapshot can&rsquo;t be restored to new VM</a></li>
   
 
 </ul>
@@ -608,6 +617,9 @@
   
 
   <li><a href="https://harvester.github.io/tests/manual/deployment/ipxe-dns-change/">Change DNS settings on vagrant-pxe-harvester install</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/deployment/4480-config-sftp-dynamically/">Config sftp dynamically</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/deployment/http-proxy-setting-harvester/">Http proxy setting on harvester</a></li>
@@ -895,6 +907,9 @@
   
 
   <li><a href="https://harvester.github.io/tests/manual/harvester-rancher/1613-create-vm-through-rancher-dashboard/">Create a VM through the Rancher dashboard</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/harvester-rancher/4678-load-balancer-different-roles-pool/">Create load balancer on different roles pools in RKE2 cluster</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/harvester-rancher/1577-create-rke2-cluster-no-cloud-provider/">Create RKE2 cluster with no cloud provider</a></li>
@@ -1512,6 +1527,9 @@
   
     <ul>
 
+  <li><a href="https://harvester.github.io/tests/manual/upgrade/4461-check-space-before-upgrade/">Check Free disk space percent before upgrade</a></li>
+  
+
   <li><a href="https://harvester.github.io/tests/manual/upgrade/rejoin-node-after-upgrade/">Rejoin node machine after Harvester upgrade</a></li>
   
 
@@ -1551,6 +1569,9 @@
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/1283-vm-creation-required-fields/">Check VM creation required-fields</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/4535-ctrl-alt-delete-windows/">Click ctrl-alt-delete in Windows</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/clone-vm-and-dont-select-start-after-creation/">Clone VM and don&rsquo;t select start after creation</a></li>
@@ -1787,6 +1808,9 @@
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/negative-vm-clone/">Negative vm clone tests</a></li>
   
 
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/4588-node-pool-anti-affinity/">Node pool anti-affinity rules</a></li>
+  
+
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/run-multiple-instances-console/">Run multiple instances of the console</a></li>
   
 
@@ -1812,6 +1836,9 @@
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/5266-view-log-function/">View log function on virtual machine</a></li>
+  
+
+  <li><a href="https://harvester.github.io/tests/manual/virtual-machines/4625-vm-without-cpu-memory/">VM creation without cpu and memory</a></li>
   
 
   <li><a href="https://harvester.github.io/tests/manual/virtual-machines/vm_on_error_state/">VM on error state</a></li>
@@ -1990,7 +2017,7 @@
 <li>going into your repo&rsquo;s <code>settings -&gt; deploy keys</code> and adding that SSH Key you just built as a <code>deploy key</code></li>
 <li>you&rsquo;ll need to keep in mind that the <code>setup.yaml</code> and similar files will need to shift to reflect the fact you&rsquo;re utilizing a private GitHub Repository, those changes may look similar to (please note: <code>spec.clientSecretName</code> to reference your SSH Key that was added to the private repository&rsquo;s settings -&gt; deploy keys &amp;&amp; <code>spec.repo</code> shifts to hold your <code>git</code> based URL/URI not the <code>https</code> based one):</li>
 </ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>    <span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">fleet.cattle.io/v1alpha1</span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>    <span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">fleet.cattle.io/v1alpha1</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">kind</span>: <span style="color:#ae81ff">GitRepo</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">metadata</span>:
 </span></span><span style="display:flex;"><span>        <span style="color:#f92672">name</span>: <span style="color:#ae81ff">setup-harvester-cluster</span>
@@ -2020,7 +2047,7 @@
 <li>Build a file in the root directory called <code>test-gitrepo-is-successful-public.yaml</code></li>
 <li>Have it structured similar to:</li>
 </ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>    <span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">fleet.cattle.io/v1alpha1</span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>    <span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">fleet.cattle.io/v1alpha1</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">kind</span>: <span style="color:#ae81ff">GitRepo</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">metadata</span>:
 </span></span><span style="display:flex;"><span>        <span style="color:#f92672">name</span>: <span style="color:#ae81ff">test-gitrepo-success-public</span>
@@ -2038,7 +2065,7 @@
 <li>Build a VM Image File in <code>/extra-vm-image</code> called <code>my-test-public-image.yaml</code></li>
 <li>Have that file structured similar to:</li>
 </ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>    <span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">harvesterhci.io/v1beta1</span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>    <span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">harvesterhci.io/v1beta1</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">kind</span>: <span style="color:#ae81ff">VirtualMachineImage</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">metadata</span>:
 </span></span><span style="display:flex;"><span>        <span style="color:#f92672">annotations</span>:
@@ -2066,7 +2093,7 @@
 <ol>
 <li>With the same <code>/extra-vm-image/my-test-public-image.yaml</code> go ahead and modify it creating a description annotation adding the line of something like:</li>
 </ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
 </span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">harvesterhci.io/storageClassName</span>: <span style="color:#ae81ff">harvester-longhorn</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">field.cattle.io/description</span>: <span style="color:#e6db74">&#34;my new description for this VirtualMachineImage that&#39;s already been downloaded from the URL earlier for Harvester&#34;</span>
@@ -2081,7 +2108,7 @@
 <li>Hop in with your favorite editor or perhaps a patch file (take this as inspiration), run <code>kubectl edit GitRepo/test-gitrepo-success-public</code></li>
 <li>be mindful we&rsquo;re utilizing <a href="https://fleet.rancher.io/ref-gitrepo">Rancher Fleet GitRepo Object Properties</a>, but add a line in the yaml under <code>spec</code> like:</li>
 </ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>  <span style="color:#f92672">forceSyncGeneration</span>: <span style="color:#ae81ff">1</span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>  <span style="color:#f92672">forceSyncGeneration</span>: <span style="color:#ae81ff">1</span>
 </span></span></code></pre></div><ol start="5">
 <li>save that edited file</li>
 <li>watch over a period of time, that &ldquo;user-deleted&rdquo; VirtualMachineImage &ldquo;should&rdquo; come-back-to-life and exist once again in your Harvester cluster</li>
