@@ -161,7 +161,7 @@ class VMSpec:
         return vol
 
     def add_image(self, name, image_id, size=10, bus="virtio", type="disk"):
-        vol_spec = VolumeSpec(size, storage_cls=f"longhorn-{image_id.split('/')[1]}",
+        vol_spec = VolumeSpec(size, storage_cls=f"harvester-longhorn",
                               annotations={"harvesterhci.io/imageId": image_id})
 
         vol = {
