@@ -3191,3 +3191,537 @@ class CRD(Base):
         items = data.get("items", [])
         logging(f"Found {len(items)} pods with label {label_selector}")
         return items
+
+    # Rancher RBAC Operations
+
+    def _run_helm(self, args, kubeconfig=None):
+        """Run a helm command against Rancher's local cluster.
+
+        Args:
+            args: List of helm sub-command arguments
+            kubeconfig: Path to kubeconfig file (uses Rancher kubeconfig by default)
+
+        Returns:
+            tuple: (return_code, stdout, stderr)
+        """
+        cmd = ["helm"]
+        if kubeconfig:
+            cmd.extend(["--kubeconfig", kubeconfig])
+        cmd.extend(args)
+        logging(f"Running helm: {' '.join(cmd)}", level="DEBUG")
+        result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
+        return result.returncode, result.stdout, result.stderr
+
+    def create_rancher_user(self, user_id, display_name):
+        """Create a Rancher local user via kubectl against Rancher's K8s API.
+
+        Args:
+            user_id: Username (used as both metadata.name and username field)
+            display_name: Human-readable display name
+
+        Returns:
+            dict: Created user resource
+        """
+        logging(f"Creating Rancher user: {user_id}")
+
+        manifest = {
+            "apiVersion": "management.cattle.io/v3",
+            "kind": "User",
+            "metadata": {"name": user_id},
+            "displayName": display_name,
+            "username": user_id,
+        }
+
+        yaml_str = yaml.dump(manifest)
+        rc, stdout, stderr = self._run_kubectl_rancher(
+            ["apply", "-f", "-"], input_data=yaml_str
+        )
+
+        if rc != 0:
+            raise Exception(f"Failed to create Rancher user '{user_id}': {stderr}")
+
+        logging(f"Created Rancher user: {user_id}")
+        return manifest
+
+    def delete_rancher_user(self, user_id):
+        """Delete a Rancher user and its associated password secret.
+
+        Args:
+            user_id: Username to delete
+        """
+        logging(f"Deleting Rancher user: {user_id}")
+
+        rc, _, stderr = self._run_kubectl_rancher([
+            "delete", "user.management.cattle.io", user_id,
+            "--ignore-not-found"
+        ])
+        if rc != 0:
+            logging(f"Warning: failed to delete user '{user_id}': {stderr}", level="WARNING")
+
+        rc, _, stderr = self._run_kubectl_rancher([
+            "delete", "secret", user_id,
+            "-n", "cattle-local-user-passwords",
+            "--ignore-not-found"
+        ])
+        if rc != 0:
+            logging(
+                f"Warning: failed to delete password secret for '{user_id}': {stderr}",
+                level="WARNING"
+            )
+
+        logging(f"Deleted Rancher user: {user_id}")
+
+    def set_user_password(self, user_id, password):
+        """Create or update the password Secret for a Rancher local user.
+
+        The secret is created in the cattle-local-user-passwords namespace.
+
+        Args:
+            user_id: Username whose password to set
+            password: Plaintext password value
+        """
+        logging(f"Setting password for Rancher user: {user_id}")
+
+        manifest = {
+            "apiVersion": "v1",
+            "kind": "Secret",
+            "metadata": {
+                "name": user_id,
+                "namespace": "cattle-local-user-passwords",
+            },
+            "type": "Opaque",
+            "stringData": {"password": password},
+        }
+
+        yaml_str = yaml.dump(manifest)
+        rc, _, stderr = self._run_kubectl_rancher(
+            ["apply", "-f", "-"], input_data=yaml_str
+        )
+
+        if rc != 0:
+            raise Exception(
+                f"Failed to set password for user '{user_id}': {stderr}"
+            )
+
+        logging(f"Password set for user: {user_id}")
+
+    def assign_standard_user_role(self, user_id):
+        """Assign the Standard User global role via a GlobalRoleBinding.
+
+        Creates a GlobalRoleBinding with globalRoleName: user which grants the
+        built-in 'Standard User' role.
+
+        Args:
+            user_id: Username to assign the role to
+        """
+        logging(f"Assigning Standard User global role to: {user_id}")
+
+        manifest = {
+            "apiVersion": "management.cattle.io/v3",
+            "kind": "GlobalRoleBinding",
+            "metadata": {"generateName": "grb-"},
+            "globalRoleName": "user",
+            "userName": user_id,
+            "userPrincipalName": user_id,
+        }
+
+        yaml_str = yaml.dump(manifest)
+        rc, _, stderr = self._run_kubectl_rancher(
+            ["create", "-f", "-"], input_data=yaml_str
+        )
+
+        if rc != 0:
+            raise Exception(
+                f"Failed to assign Standard User role to '{user_id}': {stderr}"
+            )
+
+        logging(f"Assigned Standard User role to: {user_id}")
+
+    def create_project(self, cluster_id, display_name):
+        """Create a new Rancher project in the given cluster.
+
+        Args:
+            cluster_id: Management cluster ID (e.g. c-m-xxxxx)
+            display_name: Display name for the project
+
+        Returns:
+            str: Short project ID (e.g. p-xxxxx)
+        """
+        logging(f"Creating project '{display_name}' in cluster {cluster_id}")
+
+        manifest = {
+            "apiVersion": "management.cattle.io/v3",
+            "kind": "Project",
+            "metadata": {
+                "generateName": "p-",
+                "namespace": cluster_id,
+            },
+            "spec": {
+                "clusterName": cluster_id,
+                "displayName": display_name,
+                "containerDefaultResourceLimit": {},
+                "namespaceDefaultResourceQuota": {"limit": {}},
+                "resourceQuota": {"limit": {}, "usedLimit": {}},
+            },
+        }
+
+        yaml_str = yaml.dump(manifest)
+        rc, stdout, stderr = self._run_kubectl_rancher(
+            ["create", "-f", "-", "-o", "json"], input_data=yaml_str
+        )
+
+        if rc != 0:
+            raise Exception(
+                f"Failed to create project '{display_name}' in cluster '{cluster_id}': {stderr}"
+            )
+
+        data = json.loads(stdout)
+        project_id = data.get("metadata", {}).get("name", "")
+        logging(f"Created project '{display_name}': {project_id}")
+        return project_id
+
+    def delete_project(self, cluster_id, project_id):
+        """Delete a Rancher project.
+
+        Args:
+            cluster_id: Management cluster ID (e.g. c-m-xxxxx)
+            project_id: Short project ID (e.g. p-xxxxx)
+        """
+        logging(f"Deleting project {project_id} in cluster {cluster_id}")
+
+        rc, _, stderr = self._run_kubectl_rancher([
+            "delete", "projects.management.cattle.io",
+            "-n", cluster_id, project_id, "--ignore-not-found"
+        ])
+
+        if rc != 0:
+            raise Exception(
+                f"Failed to delete project '{project_id}' in cluster '{cluster_id}': {stderr}"
+            )
+
+        logging(f"Deleted project {project_id}")
+
+    def assign_project_role(self, user_id, cluster_id, project_id, role_template_name):
+        """Create a ProjectRoleTemplateBinding to grant a user a project-scoped role.
+
+        The PRTB namespace follows Rancher's convention:
+        {cluster_id}-{project_id} (e.g. c-m-xxxxx-p-yyyyy).
+
+        Args:
+            user_id: Username to assign the role to
+            cluster_id: Management cluster ID (e.g. c-m-xxxxx)
+            project_id: Short project ID (e.g. p-xxxxx)
+            role_template_name: RoleTemplate name (e.g. virt-project-view)
+        """
+        prtb_namespace = f"{cluster_id}-{project_id}"
+        project_name = f"{cluster_id}:{project_id}"
+
+        logging(
+            f"Assigning role '{role_template_name}' to user '{user_id}' "
+            f"in project '{project_name}'"
+        )
+
+        manifest = {
+            "apiVersion": "management.cattle.io/v3",
+            "kind": "ProjectRoleTemplateBinding",
+            "metadata": {
+                "generateName": "prtb-",
+                "namespace": prtb_namespace,
+            },
+            "projectName": project_name,
+            "roleTemplateName": role_template_name,
+            "userName": user_id,
+            "userPrincipalName": f"local://{user_id}",
+        }
+
+        yaml_str = yaml.dump(manifest)
+        rc, _, stderr = self._run_kubectl_rancher(
+            ["create", "-f", "-"], input_data=yaml_str
+        )
+
+        if rc != 0:
+            raise Exception(
+                f"Failed to assign project role '{role_template_name}' "
+                f"to '{user_id}': {stderr}"
+            )
+
+        logging(
+            f"Assigned project role '{role_template_name}' to user '{user_id}'"
+        )
+
+    def delete_user_global_role_bindings(self, user_id):
+        """Delete all GlobalRoleBindings owned by the given user.
+
+        Args:
+            user_id: Username whose GlobalRoleBindings to remove
+        """
+        logging(f"Deleting GlobalRoleBindings for user: {user_id}")
+
+        rc, stdout, stderr = self._run_kubectl_rancher([
+            "get", "globalrolebindings.management.cattle.io",
+            "-o", "json"
+        ])
+
+        if rc != 0:
+            logging(
+                f"Warning: failed to list GlobalRoleBindings: {stderr}",
+                level="WARNING"
+            )
+            return
+
+        data = json.loads(stdout)
+        deleted = 0
+        for item in data.get("items", []):
+            if item.get("userName") == user_id:
+                name = item.get("metadata", {}).get("name", "")
+                rc, _, stderr = self._run_kubectl_rancher([
+                    "delete", "globalrolebinding.management.cattle.io",
+                    name, "--ignore-not-found"
+                ])
+                if rc != 0:
+                    logging(
+                        f"Warning: failed to delete GRB '{name}': {stderr}",
+                        level="WARNING"
+                    )
+                else:
+                    deleted += 1
+
+        logging(f"Deleted {deleted} GlobalRoleBinding(s) for user '{user_id}'")
+
+    def delete_user_project_role_bindings(self, user_id, cluster_id, project_id):
+        """Delete all ProjectRoleTemplateBindings owned by the user in a project.
+
+        Args:
+            user_id: Username whose bindings to remove
+            cluster_id: Management cluster ID (e.g. c-m-xxxxx)
+            project_id: Short project ID (e.g. p-xxxxx)
+        """
+        prtb_namespace = f"{cluster_id}-{project_id}"
+        logging(
+            f"Deleting ProjectRoleTemplateBindings for user '{user_id}' "
+            f"in namespace '{prtb_namespace}'"
+        )
+
+        rc, stdout, stderr = self._run_kubectl_rancher([
+            "get", "projectroletemplatebindings.management.cattle.io",
+            "-n", prtb_namespace, "-o", "json"
+        ])
+
+        if rc != 0:
+            logging(
+                f"Warning: failed to list PRTBs in '{prtb_namespace}': {stderr}",
+                level="WARNING"
+            )
+            return
+
+        data = json.loads(stdout)
+        deleted = 0
+        for item in data.get("items", []):
+            if item.get("userName") == user_id:
+                name = item.get("metadata", {}).get("name", "")
+                rc, _, stderr = self._run_kubectl_rancher([
+                    "delete", "projectroletemplatebinding.management.cattle.io",
+                    name, "-n", prtb_namespace, "--ignore-not-found"
+                ])
+                if rc != 0:
+                    logging(
+                        f"Warning: failed to delete PRTB '{name}': {stderr}",
+                        level="WARNING"
+                    )
+                else:
+                    deleted += 1
+
+        logging(
+            f"Deleted {deleted} ProjectRoleTemplateBinding(s) for user '{user_id}'"
+        )
+
+    def assign_cluster_role(self, user_id, cluster_id, role_template_name):
+        """Create a ClusterRoleTemplateBinding for a cluster-scoped role.
+
+        Args:
+            user_id: Username to assign the role to
+            cluster_id: Management cluster ID (e.g. c-m-xxxxx)
+            role_template_name: RoleTemplate name (e.g. virt-cluster-view)
+        """
+        logging(
+            f"Assigning cluster role '{role_template_name}' to user '{user_id}' "
+            f"in cluster '{cluster_id}'"
+        )
+
+        manifest = {
+            "apiVersion": "management.cattle.io/v3",
+            "kind": "ClusterRoleTemplateBinding",
+            "metadata": {
+                "generateName": "crtb-",
+                "namespace": cluster_id,
+            },
+            "clusterName": cluster_id,
+            "roleTemplateName": role_template_name,
+            "userName": user_id,
+            "userPrincipalName": f"local://{user_id}",
+        }
+
+        yaml_str = yaml.dump(manifest)
+        rc, _, stderr = self._run_kubectl_rancher(
+            ["create", "-f", "-"], input_data=yaml_str
+        )
+
+        if rc != 0:
+            raise Exception(
+                f"Failed to assign cluster role '{role_template_name}' "
+                f"to '{user_id}': {stderr}"
+            )
+
+        logging(
+            f"Assigned cluster role '{role_template_name}' to user '{user_id}'"
+        )
+
+    def delete_user_cluster_role_bindings(self, user_id, cluster_id):
+        """Delete all ClusterRoleTemplateBindings for the given user in a cluster.
+
+        Args:
+            user_id: Username whose ClusterRoleTemplateBindings to remove
+            cluster_id: Management cluster ID (e.g. c-m-xxxxx)
+        """
+        logging(
+            f"Deleting ClusterRoleTemplateBindings for user '{user_id}' "
+            f"in cluster '{cluster_id}'"
+        )
+
+        rc, stdout, stderr = self._run_kubectl_rancher([
+            "get", "clusterroletemplatebindings.management.cattle.io",
+            "-n", cluster_id, "-o", "json"
+        ])
+
+        if rc != 0:
+            logging(
+                f"Warning: failed to list CRTBs in '{cluster_id}': {stderr}",
+                level="WARNING"
+            )
+            return
+
+        data = json.loads(stdout)
+        deleted = 0
+        for item in data.get("items", []):
+            if item.get("userName") == user_id:
+                name = item.get("metadata", {}).get("name", "")
+                rc, _, stderr = self._run_kubectl_rancher([
+                    "delete", "clusterroletemplatebinding.management.cattle.io",
+                    name, "-n", cluster_id, "--ignore-not-found"
+                ])
+                if rc != 0:
+                    logging(
+                        f"Warning: failed to delete CRTB '{name}': {stderr}",
+                        level="WARNING"
+                    )
+                else:
+                    deleted += 1
+
+        logging(
+            f"Deleted {deleted} ClusterRoleTemplateBinding(s) for user '{user_id}'"
+        )
+
+    def _run_kubectl_with_content(self, kubeconfig_content, args):
+        """Run kubectl using an in-memory kubeconfig string."""
+        fd, path = tempfile.mkstemp(suffix=".kubeconfig")
+        try:
+            with os.fdopen(fd, 'w') as f:
+                f.write(kubeconfig_content)
+            return self._run_kubectl(args, kubeconfig=path, insecure=True)
+        finally:
+            if os.path.exists(path):
+                os.remove(path)
+
+    def generate_user_kubeconfig(self, user_id, password, cluster_id):
+        """Login as user_id and return a kubeconfig YAML string for cluster_id."""
+        endpoint, _, _ = self._get_rancher_credentials()
+        logging(f"Generating kubeconfig for user '{user_id}' on cluster '{cluster_id}'")
+
+        from urllib.parse import urljoin
+        session = requests.Session()
+        session.verify = False
+        session.headers.update({"Content-Type": "application/json"})
+
+        # Step 1: authenticate as the test user
+        auth_resp = session.post(
+            urljoin(endpoint, "v3-public/localProviders/local?action=login"),
+            json={"username": user_id, "password": password}
+        )
+        if auth_resp.status_code != 201:
+            raise Exception(
+                f"Failed to authenticate as '{user_id}': "
+                f"{auth_resp.status_code} {auth_resp.text}"
+            )
+        user_token = auth_resp.json().get("token")
+        if not user_token:
+            raise Exception(f"No token returned for '{user_id}'")
+
+        # Step 2: generate kubeconfig for the cluster
+        kc_resp = session.post(
+            f"{endpoint.rstrip('/')}/v3/clusters/{cluster_id}"
+            f"?action=generateKubeconfig",
+            headers={"Authorization": f"Bearer {user_token}"}
+        )
+        if kc_resp.status_code != 200:
+            raise Exception(
+                f"Failed to generate kubeconfig for '{user_id}': "
+                f"{kc_resp.status_code} {kc_resp.text}"
+            )
+        kubeconfig = kc_resp.json().get("config")
+        if not kubeconfig:
+            raise Exception(f"Empty kubeconfig returned for '{user_id}'")
+
+        logging(f"Generated kubeconfig for user '{user_id}'")
+        return kubeconfig
+
+    def verify_resource_access(self, kubeconfig_content, verb, resource, namespace):
+        """Run kubectl auth can-i <verb> <resource> -n <namespace> and return (ok, output)."""
+        rc, stdout, stderr = self._run_kubectl_with_content(
+            kubeconfig_content,
+            ["auth", "can-i", verb, resource, "-n", namespace]
+        )
+        output = stdout.strip() if stdout else stderr.strip()
+        logging(
+            f"kubectl auth can-i {verb} {resource} -n {namespace}: rc={rc}, "
+            f"output={output[:300]}",
+            level="DEBUG"
+        )
+        return rc == 0, output
+
+    def create_namespace_in_project(self, namespace_name, cluster_id, project_id):
+        """Create namespace in Harvester cluster and bind it to a Rancher project."""
+        project_ref = f"{cluster_id}:{project_id}"
+        logging(f"Creating namespace '{namespace_name}' in project '{project_ref}'")
+
+        manifest = {
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
+                "name": namespace_name,
+                "annotations": {
+                    "field.cattle.io/projectId": project_ref
+                }
+            }
+        }
+        yaml_str = yaml.dump(manifest)
+        rc, _, stderr = self._run_kubectl_guest(
+            cluster_id, ["apply", "-f", "-"], input_data=yaml_str
+        )
+        if rc != 0:
+            raise Exception(
+                f"Failed to create namespace '{namespace_name}': {stderr}"
+            )
+        logging(f"Namespace '{namespace_name}' created and assigned to project")
+
+    def delete_namespace_from_cluster(self, namespace_name, cluster_id):
+        """Delete a namespace from the Harvester cluster."""
+        logging(f"Deleting namespace '{namespace_name}' from cluster '{cluster_id}'")
+        rc, _, stderr = self._run_kubectl_guest(
+            cluster_id,
+            ["delete", "namespace", namespace_name, "--ignore-not-found"]
+        )
+        if rc != 0:
+            logging(
+                f"Warning: failed to delete namespace '{namespace_name}': {stderr}",
+                level="WARNING"
+            )

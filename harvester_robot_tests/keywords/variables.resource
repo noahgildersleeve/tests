@@ -79,6 +79,11 @@ ${CHART_REPO_BRANCH}            %{CHART_REPO_BRANCH=release-v2.14}
 ${CSI_CHART_VERSION}            %{CSI_CHART_VERSION=}
 ${CP_CHART_VERSION}             %{CP_CHART_VERSION=}
 
+# RBAC Chart (harvester-rbac Helm chart deployed via Rancher Apps)
+${RBAC_CHART_VERSION}           %{RBAC_CHART_VERSION=}
+${RBAC_USER_PASSWORD}           %{RBAC_USER_PASSWORD=RbacTest1234!}
+
+
 # IP Pool for LoadBalancer tests
 ${IP_POOL_SUBNET}               %{IP_POOL_SUBNET=192.168.1.0/24}
 ${IP_POOL_START}                %{IP_POOL_START=192.168.1.100}
